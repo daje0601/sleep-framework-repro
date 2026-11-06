@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 import shlex
+import signal
 
 import pytest
 
@@ -58,6 +59,8 @@ def test_build_command_preserves_pins_secret_reference_and_finite_timeout():
     assert "--image" in command and command[command.index("--image") + 1].endswith(
         "a" * 64
     )
+    env = [command[i + 1] for i, arg in enumerate(command) if arg == "--env"]
+    assert "HF_HOME=/tmp/sleep-hf-cache/preflight-01" in env
 
 
 @pytest.mark.parametrize(
@@ -181,3 +184,208 @@ def test_bootstrap_installs_only_missing_system_prerequisites(tmp_path, missing_
         assert " git" not in calls.read_text()
     else:
         assert not calls.exists()
+
+
+class FakeCloud:
+    def __init__(
+        self, states, *, create_output='{"slug":"job-test123"}', show_error=False
+    ):
+        self.states = iter(states)
+        self.state = "pending"
+        self.created = False
+        self.terminated = False
+        self.create_output = create_output
+        self.show_error = show_error
+        self.calls = []
+
+    def __call__(self, args, **kwargs):
+        self.calls.append(args)
+        if "create" in args:
+            self.created = True
+            return subprocess.CompletedProcess(args, 0, self.create_output, "")
+        if "list" in args:
+            jobs = (
+                [{"slug": "job-test123", "name": "sleep-preflight-01"}]
+                if self.created
+                else []
+            )
+            return subprocess.CompletedProcess(args, 0, json.dumps(jobs), "")
+        if "terminate" in args:
+            assert "job-test123" in args
+            self.terminated = True
+            self.state = "terminated"
+            return subprocess.CompletedProcess(args, 0, "{}", "")
+        if "billing" in args:
+            return subprocess.CompletedProcess(args, 0, '{"burnRatePerHour":0}', "")
+        if "show" in args:
+            if self.show_error and not self.terminated:
+                self.show_error = False
+                raise RuntimeError("temporary status failure")
+            if not self.terminated:
+                self.state = next(self.states, self.state)
+            return subprocess.CompletedProcess(
+                args,
+                0,
+                json.dumps(
+                    {
+                        "slug": "job-test123",
+                        "name": "sleep-preflight-01",
+                        "workloadState": self.state,
+                    }
+                ),
+                "",
+            )
+        raise AssertionError(args)
+
+
+class FakeTime:
+    value = 0
+
+    def now(self):
+        return self.value
+
+    def sleep(self, seconds):
+        self.value += seconds
+
+
+def test_submit_monitors_until_terminal_and_reports_billing_without_termination():
+    module = launcher()
+    cloud = FakeCloud(["running", "succeeded"])
+    clock = FakeTime()
+    result = module.submit_and_monitor(
+        config(),
+        module.build_command(config(), EXPERIMENT),
+        run=cloud,
+        now=clock.now,
+        sleep=clock.sleep,
+    )
+    assert result["job_id"] == "job-test123" and result["state"] == "succeeded"
+    assert result["billing_burn_rate_per_hour"] == 0
+    assert cloud.created and not cloud.terminated
+    assert clock.value > 0
+
+
+def test_queue_deadline_terminates_only_created_job_and_verifies_terminal():
+    module = launcher()
+    cloud = FakeCloud(["scheduling"])
+    clock = FakeTime()
+    cfg = config()
+    cfg["timeout_seconds"] = 1
+    with pytest.raises(TimeoutError):
+        module.submit_and_monitor(
+            cfg,
+            module.build_command(cfg, EXPERIMENT),
+            run=cloud,
+            now=clock.now,
+            sleep=clock.sleep,
+        )
+    assert cloud.terminated and cloud.state == "terminated"
+    assert clock.value <= 76
+    assert any("billing" in command for command in cloud.calls)
+
+
+def test_monitor_exception_cleans_up_and_does_not_stop_unrelated_work():
+    module = launcher()
+    cloud = FakeCloud(["running"], show_error=True)
+    clock = FakeTime()
+    with pytest.raises(RuntimeError, match="status failure"):
+        module.submit_and_monitor(
+            config(),
+            module.build_command(config(), EXPERIMENT),
+            run=cloud,
+            now=clock.now,
+            sleep=clock.sleep,
+        )
+    assert cloud.terminated
+    assert len([call for call in cloud.calls if "terminate" in call]) == 1
+
+
+def test_keyboard_interrupt_cleans_up_created_job():
+    module = launcher()
+    cloud = FakeCloud(["running"])
+    clock = FakeTime()
+
+    def interrupt(seconds):
+        raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        module.submit_and_monitor(
+            config(),
+            module.build_command(config(), EXPERIMENT),
+            run=cloud,
+            now=clock.now,
+            sleep=interrupt,
+        )
+    assert cloud.terminated
+
+
+@pytest.mark.parametrize(
+    "reply",
+    ['✓ Job "sleep-preflight-01" created (slug: job-test123).', "unparseable response"],
+)
+def test_created_job_can_be_recovered_from_cli_message_or_unique_name(reply):
+    module = launcher()
+    cloud = FakeCloud(["succeeded"], create_output=reply)
+    clock = FakeTime()
+    result = module.submit_and_monitor(
+        config(),
+        module.build_command(config(), EXPERIMENT),
+        run=cloud,
+        now=clock.now,
+        sleep=clock.sleep,
+    )
+    assert result["job_id"] == "job-test123" and result["state"] == "succeeded"
+
+
+def test_sigterm_during_main_submission_cleans_up_and_restores_handler(
+    tmp_path, monkeypatch
+):
+    module = launcher()
+    cloud = FakeCloud(["running"])
+    path = tmp_path / "job.json"
+    experiment = tmp_path / "experiment.json"
+    cfg = config()
+    cfg["experiment_config"] = str(experiment)
+    path.write_text(json.dumps(cfg))
+    experiment.write_text(json.dumps(EXPERIMENT))
+    installed = []
+    original = signal.getsignal(signal.SIGTERM)
+
+    def install(sig, handler):
+        assert sig == signal.SIGTERM
+        installed.append(handler)
+        return original
+
+    def terminate(seconds):
+        assert installed and callable(installed[0])
+        installed[0](signal.SIGTERM, None)
+
+    monkeypatch.setattr(module.signal, "signal", install)
+    monkeypatch.setattr(module.subprocess, "run", cloud)
+    monkeypatch.setattr(module.time, "sleep", terminate)
+    with pytest.raises(KeyboardInterrupt):
+        module.main(["--config", str(path), "--submit"])
+    assert cloud.terminated
+    assert installed[-1] is original
+
+
+def test_interrupt_during_create_recovers_unique_new_job_for_cleanup():
+    module = launcher()
+    cloud = FakeCloud(["running"])
+    clock = FakeTime()
+
+    def create_interrupted(args, **kwargs):
+        result = cloud(args, **kwargs)
+        if "create" in args:
+            raise KeyboardInterrupt
+        return result
+
+    with pytest.raises(KeyboardInterrupt):
+        module.submit_and_monitor(
+            config(),
+            module.build_command(config(), EXPERIMENT),
+            run=create_interrupted,
+            now=clock.now,
+            sleep=clock.sleep,
+        )
+    assert cloud.created and cloud.terminated

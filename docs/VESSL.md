@@ -47,7 +47,19 @@ python scripts/vessl_launch.py --config configs/vessl.local.json --submit
 ```
 
 The launcher never authenticates, creates resources, submits by default, or
-loops over seeds. The hard GNU `timeout` bounds checkout, dependency setup,
+loops over seeds. With `--submit`, it stays attached and polls the created job
+every 15 seconds until a terminal state. Its local deadline starts before
+submission and includes queue and image-pull time: `timeout_seconds + 60`
+seconds. A deadline, Ctrl-C, SIGTERM, or monitoring exception triggers termination of
+that newly created job only, followed by a terminal-state check. A second
+bounded cleanup window allows the provider to finish termination. Choose a
+fresh unique `job_name`; existing names are rejected so cleanup cannot target
+an earlier job. The final compact report includes job ID, verified state, and
+the account's aggregate billing burn rate. Other jobs and workspaces are
+never stopped. Keep the launcher running until that report appears; if API
+failure prevents verification, it raises an explicit manual-attention error.
+
+The independent hard GNU `timeout` bounds checkout, dependency setup,
 downloads, and work; it sends TERM at the deadline and KILL after 30 seconds.
 The container must contain `timeout` before startup. A timeout is a process
 guard, not a price guarantee or a provider scheduling deadline.
@@ -82,8 +94,16 @@ The CLI preflight is one bounded actual training-task adaptation check, not the
 full benchmark. Its report records peak CUDA memory and real losses. A failed
 command cannot produce the successful preflight gate. The output volume keeps
 `RUN/console.log`, reviewed configs, environment/source metadata, the preflight
-report, `exit.json`, and `preflight_gate.json`. `HF_HOME` is also on the private
-volume; gated weights must remain private and must not be redistributed.
+report, `exit.json`, and `preflight_gate.json`. `HF_HOME` uses the job-local
+ephemeral POSIX path `/tmp/sleep-hf-cache/RUN_ID`, where Hugging Face's cache
+symlinks and atomic files are supported. It is not placed on the object-volume
+mount. Gated weights must remain private and must not be redistributed.
+
+The second executed preflight, source `3f143bd`, failed before model loading
+because `config.json` in the earlier shared object-volume HF cache was invalid
+JSON. Consequently that run did not validate the CPU-audit memory fix on GPU.
+The job-local cache change addresses this observed storage failure; another
+successful preflight is still required. See [experiment status](EXPERIMENT_STATUS.md).
 
 Inspect job status/logs with `vesslctl job show JOB_ID` and
 `vesslctl job logs JOB_ID --follow`. Check the persistent artifacts after the

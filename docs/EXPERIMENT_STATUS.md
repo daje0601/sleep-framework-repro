@@ -9,6 +9,10 @@ consolidation audit snapshot allocation: 43.73 GiB allocated on a GPU exposing
 44.39 GiB, with another 1,002 MiB requested. This used commit `9091350`.
 The follow-up implementation moves audit and rollback copies to CPU and
 releases already-accumulated wake gradients before creating snapshots.
+The second preflight (`3f143bd`) failed before model loading because the shared
+object-volume Hugging Face cache returned an invalid `config.json`. Therefore
+it did not validate the memory correction. Both jobs reached terminal failure;
+the account's compute burn rate was verified as zero afterward.
 
 | Component / experiment | Implementation and available evidence | Execution / reproduction status |
 | --- | --- | --- |
@@ -22,7 +26,7 @@ releases already-accumulated wake gradients before creating snapshots.
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
 | Official SEAL baseline | Upstream recipe identified and cited | External baseline not implemented or executed here |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | First GPU preflight failed with OOM; corrected preflight and quantitative comparison pending |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | GPU attempts failed with OOM and then cache corruption; successful preflight and quantitative comparison pending |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 ## Evidence that must accompany a result

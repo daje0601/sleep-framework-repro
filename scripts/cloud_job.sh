@@ -32,6 +32,10 @@ PY
 )
 mount_path="${settings[0]}"
 run_dir="$mount_path/${settings[1]}"
+# Hugging Face cache uses symlinks/atomic files: keep it on ephemeral POSIX
+# storage. The mounted object volume is reserved for explicit run artifacts.
+export HF_HOME="/tmp/sleep-hf-cache/${settings[1]}"
+mkdir -p "$HF_HOME"
 test "$(git rev-parse HEAD)" = "${settings[2]}"
 test -d "$mount_path" && test -w "$mount_path"
 mkdir "$run_dir" # Refuse to overwrite an earlier attempt, including failures.

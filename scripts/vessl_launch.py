@@ -8,7 +8,9 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import shlex
+import signal
 import subprocess
+import time
 
 
 def config_hash(experiment: dict) -> str:
@@ -239,13 +241,183 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
             experiment, separators=(",", ":"), allow_nan=False
         ),
         "SLEEP_TIMEOUT_SECONDS": str(seconds),
-        "HF_HOME": mount.rstrip("/") + "/hf-cache",
+        "HF_HOME": "/tmp/sleep-hf-cache/" + cfg["run_id"],
         "HF_HUB_DISABLE_TELEMETRY": "1",
         "TOKENIZERS_PARALLELISM": "false",
     }
     for key, value in environment.items():
         command.extend(["--env", f"{key}={value}"])
     return command
+
+
+TERMINAL_STATES = {
+    "succeeded",
+    "completed",
+    "finished",
+    "failed",
+    "terminated",
+    "cancelled",
+    "canceled",
+    "stopped",
+    "deleted",
+}
+SUCCESS_STATES = {"succeeded", "completed", "finished"}
+
+
+def submit_and_monitor(cfg, command, *, run=None, now=None, sleep=None):
+    """Own one created job until terminal; clean it up on deadline or interruption.
+
+    The local deadline includes queue and image-pull time. The independent
+    container timeout remains a second guard. Only the newly created job is
+    eligible for termination; pre-existing jobs and workspaces are untouched.
+    """
+    run = subprocess.run if run is None else run
+    now = time.monotonic if now is None else now
+    sleep = time.sleep if sleep is None else sleep
+    base = [command[0], "--org", cfg["org"], "--team", cfg["team"]]
+    deadline = now() + cfg["timeout_seconds"] + 60
+    job_id = None
+    state = None
+    attempted = False
+    cleanup_requested = False
+
+    def invoke(arguments):
+        result = run(
+            base + arguments, check=False, capture_output=True, text=True, timeout=30
+        )
+        if result.returncode:
+            # Avoid echoing provider streams, which may grow new sensitive fields.
+            raise RuntimeError(
+                f"VESSL {' '.join(arguments[:2])} failed (exit {result.returncode})"
+            )
+        return result
+
+    def read_json(arguments):
+        return json.loads(invoke(arguments + ["--output", "json"]).stdout)
+
+    def named_jobs():
+        jobs = read_json(["job", "list"])
+        if isinstance(jobs, dict):
+            jobs = jobs.get("jobs", jobs.get("items", []))
+        return [job for job in jobs if job.get("name") == cfg["job_name"]]
+
+    def recover_created_job():
+        # A pre-submission check rejects existing names, making an exact unique
+        # match a safe fallback when creation returned partial/malformed output.
+        matches = named_jobs()
+        if len(matches) != 1 or not re.fullmatch(
+            r"job-[a-z0-9]+", str(matches[0].get("slug", ""))
+        ):
+            raise RuntimeError(
+                "Cannot identify the newly created job uniquely; inspect the submitted job name"
+            )
+        return matches[0]["slug"]
+
+    def job_state(identifier):
+        job = read_json(["job", "show", identifier])
+        if job.get("slug") != identifier or job.get("name") != cfg["job_name"]:
+            raise RuntimeError(
+                "Created-job identity does not match the reviewed job name"
+            )
+        value = job.get("workloadState")
+        if not isinstance(value, str):
+            raise RuntimeError("Job status lacks a workload state")
+        return value.lower()
+
+    def cleanup():
+        nonlocal state, cleanup_requested
+        try:
+            state = job_state(job_id)
+        except Exception:
+            state = None
+        if state not in TERMINAL_STATES:
+            cleanup_requested = True
+            invoke(["job", "terminate", job_id, "--yes"])
+            cleanup_deadline = now() + 60
+            while True:
+                state = job_state(job_id)
+                if state in TERMINAL_STATES:
+                    break
+                if now() >= cleanup_deadline:
+                    raise RuntimeError(
+                        f"Termination not verified for {job_id}; manual attention required"
+                    )
+                sleep(min(5, cleanup_deadline - now()))
+
+    # Never create a duplicate name: fallback cleanup must not target an older job.
+    if named_jobs():
+        raise ValueError("job_name already exists; choose a fresh unique job name")
+    try:
+        if now() >= deadline:
+            raise TimeoutError("Submission deadline expired before job creation")
+        attempted = True
+        response = run(
+            command + ["--output", "json"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        candidate = None
+        try:
+            payload = json.loads(response.stdout)
+            if isinstance(payload, dict):
+                candidate = payload.get("slug") or payload.get("job", {}).get("slug")
+        except (ValueError, AttributeError):
+            pass
+        if not candidate:
+            match = re.search(
+                r"\(slug:\s*(job-[a-z0-9]+)\)", response.stdout + "\n" + response.stderr
+            )
+            candidate = match.group(1) if match else recover_created_job()
+        if not re.fullmatch(r"job-[a-z0-9]+", str(candidate)):
+            raise RuntimeError("Invalid created-job identifier")
+        # Verify before treating a parsed identifier as a job we own.
+        state = job_state(candidate)
+        job_id = candidate
+        print(json.dumps({"job_id": job_id, "state": state}), flush=True)
+        if response.returncode:
+            raise RuntimeError(
+                f"Job creation returned exit {response.returncode}; cleaning up {job_id}"
+            )
+        while state not in TERMINAL_STATES:
+            if now() >= deadline:
+                raise TimeoutError(f"Job {job_id} exceeded queue plus runtime deadline")
+            sleep(min(15, deadline - now()))
+            updated = job_state(job_id)
+            if updated != state:
+                print(json.dumps({"job_id": job_id, "state": updated}), flush=True)
+            state = updated
+    except BaseException as original:
+        if attempted:
+            try:
+                if job_id is None:
+                    job_id = recover_created_job()
+                cleanup()
+            except BaseException as cleanup_error:
+                raise RuntimeError(
+                    f"Unable to verify cleanup of this submission ({job_id or cfg['job_name']}); manual attention required"
+                ) from cleanup_error
+        raise original
+    finally:
+        if job_id is not None:
+            billing_error = None
+            burn_rate = None
+            try:
+                burn_rate = read_json(["billing", "show"]).get("burnRatePerHour")
+            except Exception as error:
+                billing_error = type(error).__name__
+            summary = {
+                "job_id": job_id,
+                "state": state,
+                "terminal_verified": state in TERMINAL_STATES,
+                "cleanup_requested": cleanup_requested,
+                "billing_burn_rate_per_hour": burn_rate,
+                "billing_read_error": billing_error,
+                "success": state in SUCCESS_STATES,
+            }
+            print(json.dumps(summary), flush=True)
+    return summary
 
 
 def main(argv=None) -> int:
@@ -277,7 +449,19 @@ def main(argv=None) -> int:
         flush=True,
     )
     if args.submit:
-        subprocess.run(command, check=True)
+        previous = signal.getsignal(signal.SIGTERM)
+
+        def interrupt_submission(signum, frame):
+            raise KeyboardInterrupt(
+                "Termination signal received; cleaning up created job"
+            )
+
+        signal.signal(signal.SIGTERM, interrupt_submission)
+        try:
+            result = submit_and_monitor(cfg, command)
+        finally:
+            signal.signal(signal.SIGTERM, previous)
+        return 0 if result["success"] else 1
     return 0
 
 
