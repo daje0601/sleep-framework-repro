@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sleep-framework-repro"
+version = "0.1.0"
+description = "Independent, auditable reproduction of the Sleep framework on ARC"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = ["torch>=2.6,<3", "transformers>=4.51,<6", "numpy>=1.26"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "build>=1"]
+
+[project.scripts]
+sleep-repro = "sleep_repro.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+sleep_repro = ["arc_data_manifest.json"]

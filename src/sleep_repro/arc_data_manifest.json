@@ -1,0 +1,50 @@
+{
+  "evaluation_ids": [
+    "59341089",
+    "66e6c45b",
+    "68b67ca3",
+    "903d1b4a",
+    "b1fc8b8e",
+    "bc4146bd",
+    "c7d4e6ad",
+    "ce8d95cc"
+  ],
+  "files": {
+    "eval_challenges.json": {
+      "bytes": 119559,
+      "sha256": "0bdb42fdfb81b774cb65adc5b950c98878b795f8033f1c1086255107ef7d191a",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/data/arc-agi_evaluation_challenges_filtered_1B_eval_set.json"
+    },
+    "eval_solutions.json": {
+      "bytes": 8595,
+      "sha256": "d66348ad7a938d27ff6dbc36ae9d4d571bea2da63b3d96e93e9953cfa2fda983",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/data/arc-agi_evaluation_solutions_filtered_1B_eval_set.json"
+    },
+    "train_challenges.json": {
+      "bytes": 61310,
+      "sha256": "e130bc1ee1cdcbf9ae7b802cf92c5e82fe0899227f9376630fdb1e8271ddacfd",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/data/arc-agi_training_challenges_filtered_1B_training_set.json"
+    },
+    "train_solutions.json": {
+      "bytes": 3470,
+      "sha256": "7ebeeb1ec8fe36d7ff90fbec9fe11d0eb93f02473158b8da5141fb9c44f6288f",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/data/arc-agi_training_solutions_filtered_1B_training_set.json"
+    }
+  },
+  "protocol_label": "public protocol reconstruction",
+  "seal_commit": "6d9c9f9ee392c6cc618e771f399d436d190f6ca4",
+  "split_rationale": "Public protocol reconstruction: 11 unique training tasks reached by the upstream self-edit generation command, and 8 unique evaluation tasks in the saved upstream final results. Retain every test subtask of those fixed source tasks; do not inherit CLI truncation, skips, shuffling, or result-dependent filtering. This is not a verified author-provided Sleep task manifest.",
+  "train_ids": [
+    "44f52bb0",
+    "4be741c5",
+    "5582e5ca",
+    "5614dbcf",
+    "5bd6f4ac",
+    "6150a2bd",
+    "67e8384a",
+    "6d0aefbc",
+    "6e02f1e3",
+    "8be77c9e",
+    "8d5021e8"
+  ]
+}

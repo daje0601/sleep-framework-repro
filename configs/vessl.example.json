@@ -1,0 +1,23 @@
+{
+  "org": "<YOUR_ORGANIZATION>",
+  "team": "<YOUR_TEAM>",
+  "job_name": "sleep-preflight-01",
+  "run_id": "preflight-01",
+  "resource_spec": "<ACCOUNT_RESOURCE_SPEC_SLUG>",
+  "image": "<CUDA_PYTHON312_IMAGE>@sha256:<64_HEX_DIGEST>",
+  "object_volume": "<PERSISTENT_OBJECT_VOLUME_SLUG>",
+  "mount_path": "/persistent",
+  "hf_secret": "<VESSL_SECRET_NAME>",
+  "repository": "https://github.com/<OWNER>/<REPOSITORY>.git",
+  "source_commit": "<40_HEX_PUBLISHED_SOURCE_COMMIT>",
+  "torch_version": "<VERSION_SUPPLIED_BY_PINNED_IMAGE>",
+  "timeout_seconds": 3600,
+  "stage": "preflight",
+  "experiment_config": "arc_sleep.json",
+  "linux_dependencies": [
+    "setuptools==84.2.1",
+    "numpy==2.5.4",
+    "transformers==5.22.1",
+    "accelerate==1.15.0"
+  ]
+}

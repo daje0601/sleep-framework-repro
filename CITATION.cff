@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: >-
+  Please cite this software for the independent reconstruction and cite the
+  Sleep, Nested Learning, SEAL, and ARC publications separately for their work.
+title: 'Sleep Framework Reproduction: Independent ARC Reconstruction'
+type: software
+authors:
+  - name: Sleep Framework Reproduction contributors
+version: 0.1.0
+repository-code: 'https://github.com/daje0601/sleep-framework-repro'
+url: 'https://github.com/daje0601/sleep-framework-repro'
+license: MIT
+abstract: >-
+  Unofficial independent implementation of a reconstructed ARC protocol for
+  Language Models Need Sleep. Includes transactional memory consolidation,
+  bounded JSON dreaming, isolated adaptation, CPU correctness checks, and
+  auditable experiment runners. No quantitative paper reproduction is claimed.
+keywords:
+  - continual learning
+  - ARC
+  - reproduction
+  - language models

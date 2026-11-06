@@ -1,0 +1,4 @@
+include LICENSE CITATION.cff requirements.lock
+recursive-include configs *.json
+recursive-include scripts *.py *.sh
+recursive-include docs *.md
