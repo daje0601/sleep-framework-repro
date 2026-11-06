@@ -5,9 +5,10 @@ Run CLI. Its flags were checked against `vesslctl` version `2026.11.05-03`.
 VESSL documents [Cloud batch jobs and persistent object-volume mounts](https://vessl.ai/en/blog/vessl-cloud-batch-jobs)
 and the [Cloud CLI](https://vessl.ai/en/blog/vesslctl-cli-launch).
 
-No GPU job has been submitted or measured by adding these files. The example
-contains deliberate placeholders. Resource availability, image digest, storage,
-model access, and cost must come from the actual account.
+The generic example contains deliberate placeholders. Resource availability,
+image digest, storage, model access, and cost must come from the actual account.
+See [experiment status](EXPERIMENT_STATUS.md) for executed work; the existence
+of these scripts is not evidence of a successful GPU experiment.
 
 ## Prepare one reviewable preflight
 

@@ -35,6 +35,12 @@ routing buffers are checkpoint state. Four-level chains can be constructed,
 but the initial experiment config uses two levels; four-level ARC results have
 not been produced.
 
+Audit and rollback state copies live in CPU memory. The teacher and prospective
+student execution models stay on the configured device. Accumulated wake
+gradients remain in checkpointed buffers; redundant parameter `.grad` tensors
+are released before snapshots. This trades host RAM and transfer time for GPU
+memory without changing the optimization or commit rules.
+
 ## Knowledge Seeding and Learning to Imitate
 
 | Setting | Source / recovered published detail | Chosen implementation and rationale | Sensitivity / comparability |

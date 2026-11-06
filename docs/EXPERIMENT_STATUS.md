@@ -1,8 +1,14 @@
 # Experiment status
 
 Updated 2026-11-07. This is an unofficial independent reconstruction. There are
-**no completed pretrained GPU runs and no quantitative reproduction results**.
+**no successful pretrained GPU preflight and no quantitative reproduction results**.
 Published paper percentages are not measurements from this repository.
+
+The first L40S preflight loaded the pinned model, then failed during
+consolidation audit snapshot allocation: 43.73 GiB allocated on a GPU exposing
+44.39 GiB, with another 1,002 MiB requested. This used commit `9091350`.
+The follow-up implementation moves audit and rollback copies to CPU and
+releases already-accumulated wake gradients before creating snapshots.
 
 | Component / experiment | Implementation and available evidence | Execution / reproduction status |
 | --- | --- | --- |
@@ -12,11 +18,11 @@ Published paper percentages are not measurements from this repository.
 | KS/LTI | Masked forward KL, detached mixed-policy sampling, frozen teacher semantic judging, edit reward | CPU objective/engine checks available; semantic-judge quality and ARC effectiveness unmeasured |
 | Dreaming and ReST-EM | Bounded JSON dreams, gradient ranking, isolated candidate adaptation, positive-reward outer updates | CPU correctness checks available; learned pretrained directive policy not trained |
 | Synthetic integration | Tiny random Llama, synthetic grids, actual updates, checkpoint continuation | Exercised locally through CPU tests; deliberately not ARC benchmark evidence |
-| Hosted CPU CI | Offline tests, synthetic CLI smoke, package build workflow configured | Hosted workflow result is not yet recorded |
+| Hosted CPU CI | Offline tests, synthetic CLI smoke, package build and uploaded evidence | [Initial public run passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42244614666) on commit `9091350` |
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
 | Official SEAL baseline | Upstream recipe identified and cited | External baseline not implemented or executed here |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | GPU smoke, locked multi-seed experiment, and numerical comparison not run |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | First GPU preflight failed with OOM; corrected preflight and quantitative comparison pending |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 ## Evidence that must accompany a result

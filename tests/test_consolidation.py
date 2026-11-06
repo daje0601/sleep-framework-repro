@@ -307,3 +307,96 @@ def test_one_unselected_new_receiver_aborts_every_chain_and_preserves_live_state
         consolidate(chains, 0, objective, base_lr=0.03, expert_lr=0.01, steps=2)
     for key, value in before.items():
         torch.testing.assert_close(chains.state_dict()[key], value, rtol=0, atol=0)
+
+
+@pytest.mark.parametrize(
+    "device",
+    [
+        "cpu",
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not torch.cuda.is_available(), reason="CUDA unavailable"
+            ),
+        ),
+    ],
+)
+def test_cpu_snapshot_owns_independent_storage_for_model_and_nested_optimizer_state(
+    device,
+):
+    from sleep_repro.consolidation import _cpu_snapshot
+
+    model = nn.Linear(3, 2).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    model(torch.ones(1, 3, device=device)).sum().backward()
+    optimizer.step()
+    source = {"model": model.state_dict(), "optimizer": optimizer.state_dict()}
+    snapshot = _cpu_snapshot(source)
+    expected_weight = model.weight.detach().cpu().clone()
+    expected_moment = (
+        next(iter(optimizer.state.values()))["exp_avg"].detach().cpu().clone()
+    )
+    assert snapshot["model"]["weight"].device.type == "cpu"
+    assert not snapshot["model"]["weight"].requires_grad
+    assert snapshot["model"]["weight"].data_ptr() != model.weight.data_ptr()
+    moment_key = next(iter(snapshot["optimizer"]["state"]))
+    for state in snapshot["optimizer"]["state"].values():
+        assert all(
+            value.device.type == "cpu"
+            for value in state.values()
+            if isinstance(value, torch.Tensor)
+        )
+    with torch.no_grad():
+        model.weight.add_(10)
+        next(iter(optimizer.state.values()))["exp_avg"].zero_()
+    torch.testing.assert_close(
+        snapshot["model"]["weight"], expected_weight, rtol=0, atol=0
+    )
+    torch.testing.assert_close(
+        snapshot["optimizer"]["state"][moment_key]["exp_avg"],
+        expected_moment,
+        rtol=0,
+        atol=0,
+    )
+    snapshot["model"]["weight"].zero_()
+    assert model.weight.abs().sum() > 0
+    assert snapshot["model"]._metadata == source["model"]._metadata
+
+
+def test_cpu_rollback_backup_restores_live_weights_after_partial_commit_failure(
+    monkeypatch,
+):
+    from sleep_repro.consolidation import _commit
+
+    live = nn.Linear(3, 2)
+    optimizer = torch.optim.Adam(live.parameters(), lr=0.01)
+    live(torch.ones(1, 3)).sum().backward()
+    optimizer.step()
+    before = copy.deepcopy(live.state_dict())
+    optimizer_before = copy.deepcopy(optimizer.state_dict())
+    student = copy.deepcopy(live)
+    with torch.no_grad():
+        student.weight.add_(5)
+    actual_load = live.load_state_dict
+    calls = 0
+
+    def load_then_fail_once(state, *args, **kwargs):
+        nonlocal calls
+        calls += 1
+        result = actual_load(state, *args, **kwargs)
+        if calls == 1:
+            # Fail after applying prospective weights: rollback must read an
+            # independent old snapshot rather than an alias of those weights.
+            raise RuntimeError("commit failed after applying weights")
+        return result
+
+    monkeypatch.setattr(live, "load_state_dict", load_then_fail_once)
+    with pytest.raises(RuntimeError, match="commit failed"):
+        _commit(live, student, list(live.parameters()), optimizer)
+    for key, value in before.items():
+        torch.testing.assert_close(live.state_dict()[key], value, rtol=0, atol=0)
+    for key, state in optimizer_before["state"].items():
+        for name, value in state.items():
+            torch.testing.assert_close(
+                optimizer.state_dict()["state"][key][name], value, rtol=0, atol=0
+            )

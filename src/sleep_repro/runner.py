@@ -216,6 +216,9 @@ def wake_episode(policy, tokenizer, cfg, task):
             raise FloatingPointError("Nonfinite wake loss")
         loss.backward()
         due = record_wake(episode)
+        # The schedule now owns these gradients in its accumulation buffers.
+        # Release redundant .grad storage before allocating transfer snapshots.
+        episode.zero_grad(set_to_none=True)
         events.append({"event": "wake", "step": step, "loss": float(loss.detach())})
         for level in due:
             if level == cfg.levels - 1:
@@ -406,6 +409,10 @@ def train(cfg, output, resume=None):
             "generated": cfg.train_dreams,
             "invalid": rejected,
             "valid_directives": [d.to_json() for d in valid],
+            "expanded_example_hashes": [
+                content_hash([asdict(p) for p in expand_directive(support, d)])
+                for d in valid
+            ],
             "gradient_scores": scores,
             "selected_indices": selected,
             "accepted": [d.to_json() for d in accepted],

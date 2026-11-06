@@ -3,6 +3,7 @@
 Snapshots deliberately copy the full model, enabling objectives on actual HF
 logits rather than disconnected FFN outputs. This correctness-first strategy
 has substantial memory cost; GPU preflight must measure it before experiments.
+Audit and rollback state copies own CPU storage to avoid extra GPU model copies.
 """
 
 from __future__ import annotations
@@ -64,6 +65,29 @@ def _validate_finite(model: nn.Module) -> None:
             raise FloatingPointError(f"nonfinite prospective state: {name}")
 
 
+def _cpu_snapshot(value):
+    """Own independent CPU tensor storage throughout a nested checkpoint state.
+
+    ``copy=True`` is essential even for tensors already on CPU: later live
+    mutations must never change an audit reference or rollback backup.
+    """
+    if isinstance(value, Tensor):
+        return value.detach().to(device="cpu", copy=True)
+    if isinstance(value, dict):
+        snapshot = type(value)(
+            (key, _cpu_snapshot(item)) for key, item in value.items()
+        )
+        # Module state_dict version metadata is used by load_state_dict hooks.
+        if hasattr(value, "_metadata"):
+            snapshot._metadata = copy.deepcopy(value._metadata)
+        return snapshot
+    if isinstance(value, list):
+        return [_cpu_snapshot(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_cpu_snapshot(item) for item in value)
+    return copy.deepcopy(value)
+
+
 def _commit(
     live: nn.Module,
     student: nn.Module,
@@ -72,9 +96,9 @@ def _commit(
 ) -> None:
     # Parameter objects and their requires_grad flags remain live, preserving
     # attached optimizer references and any separately configured policy adapter.
-    old_state = copy.deepcopy(live.state_dict())
+    old_state = _cpu_snapshot(live.state_dict())
     old_optimizer = (
-        copy.deepcopy(optimizer.state_dict()) if optimizer is not None else None
+        _cpu_snapshot(optimizer.state_dict()) if optimizer is not None else None
     )
     try:
         live.load_state_dict(student.state_dict(), strict=True)
@@ -144,9 +168,7 @@ def consolidate(
         # explicitly discard them so frozen tensors never carry wake gradients.
         teacher.zero_grad(set_to_none=True)
         student.zero_grad(set_to_none=True)
-        teacher_before = {
-            key: value.clone() for key, value in teacher.state_dict().items()
-        }
+        teacher_before = _cpu_snapshot(teacher.state_dict())
         trainable = []
         expert_parameter_groups = []
         initial_expert_parameters = []
@@ -170,9 +192,7 @@ def consolidate(
             new_experts.append(new_index)
             chain.pending[sender_level] = False
             chain.update_counts[sender_level].add_(1)
-        prospective_before = {
-            key: value.clone() for key, value in student.state_dict().items()
-        }
+        prospective_before = _cpu_snapshot(student.state_dict())
         trainable_names = {
             name
             for name, parameter in student.named_parameters()
@@ -213,12 +233,12 @@ def consolidate(
         if not bool(torch.isfinite(final_loss)):
             raise FloatingPointError("nonfinite post-fit consolidation objective")
         for key, value in teacher.state_dict().items():
-            if not torch.equal(value, teacher_before[key]):
+            if not torch.equal(value.detach().cpu(), teacher_before[key]):
                 raise RuntimeError(f"objective modified immutable teacher state: {key}")
         # Frozen state may not be mutated inside a user-supplied objective.
         for key, value in student.state_dict().items():
             if key not in trainable_names and not torch.equal(
-                value, prospective_before[key]
+                value.detach().cpu(), prospective_before[key]
             ):
                 raise RuntimeError(f"objective modified frozen student state: {key}")
         for chain_index, (parameters, initial) in enumerate(

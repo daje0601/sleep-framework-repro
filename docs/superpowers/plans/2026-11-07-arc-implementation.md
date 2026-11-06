@@ -53,9 +53,10 @@
 ### Task 5: Review and release readiness
 - [x] Independent scientific/code review; fix important findings and rerun affected tests.
 - [x] Run complete CPU suite and CLI smoke, package build, clean artifact checks.
-- [ ] Inspect actual GitHub/VESSL access; publish/execute only through available authorized account and record blockers precisely.
+- [x] Inspect actual GitHub/VESSL access; publish/execute only through available authorized account and record blockers precisely.
 
 ## Execution ledger
 - 2026-11-07: Approved design. Current folder has no Git repo. Use current folder and initialize a new development branch. Parallel modules have disjoint ownership; integration and mutation of git state stay with controller.
 
 - 2026-11-07: Core ARC implementation complete. Independent review fixed causal routing, committed-function consistency, per-expert training eligibility, low-precision safety, dataset/checkpoint binding, policy-update accounting, and candidate memory lifetimes. CPU suite: 142 passed; built and installed wheel passed offline CLI smoke and packaged 11/8 data verification. GPU and hosted CI evidence remain pending.
+- 2026-11-07: Final initial-release suite: 144 passed. Public source commit `9091350` published; hosted Linux CI passed. VESSL and model authentication verified. A single L40S preflight with a 1,800-second execution limit was submitted after explicit authorization to store the model-access token as a private VESSL secret. GPU outcome and quantitative reproduction remain pending.

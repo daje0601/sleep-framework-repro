@@ -2,7 +2,7 @@
 
 An **unofficial, independent ARC reconstruction** of [Language Models Need Sleep](https://arxiv.org/html/2606.03979v2). This repository implements a runnable interpretation of the method and records its reconstruction choices. It is not affiliated with Google or the paper authors.
 
-**No pretrained GPU experiment or quantitative paper result has been completed.** CPU tests and a tiny random-model smoke check exercise correctness; they are not ARC benchmark evidence. See [experiment status](docs/EXPERIMENT_STATUS.md).
+**No quantitative paper result has been reproduced.** The first pretrained GPU preflight failed with out-of-memory; a correction moves diagnostic snapshots to CPU. CPU tests and a tiny random-model smoke check exercise correctness; they are not ARC benchmark evidence. See [experiment status](docs/EXPERIMENT_STATUS.md).
 
 ## What is implemented
 
