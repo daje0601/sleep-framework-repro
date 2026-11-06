@@ -14,7 +14,8 @@ of these scripts is not evidence of a successful GPU experiment.
 
 1. Authenticate locally with `vesslctl auth login`. List the account's available
    resource specifications and volumes with `vesslctl resource-spec list` and
-   `vesslctl volume list`. Create or select a private persistent object volume.
+   `vesslctl volume list`. Use an A100 or H100 with 80 GB for pretrained ARC
+   validation. Create or select a private persistent object volume.
 2. Select a Linux CUDA container with Python 3.12+, Bash, GNU `timeout`, Git,
    `venv`, pip, and a compatible PyTorch build. Pin its **actual image digest**
    as `registry/image@sha256:...` and record the image's PyTorch version. This

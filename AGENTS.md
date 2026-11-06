@@ -3,6 +3,8 @@
 ## VESSL cost control — explicit user requirement
 
 - Do not leave paid compute running when no work is being performed.
+- Use an A100 or H100 with 80 GB for pretrained ARC validation; do not repeat
+  memory-constrained runs on a 48 GB L40S.
 - Use bounded batch jobs and keep monitoring until they reach a terminal state.
 - Terminate this project's job on interruption, execution failure, or its total
   deadline, including a stalled scheduling/image-pull phase.

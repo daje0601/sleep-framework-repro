@@ -4,6 +4,10 @@ This records implementation evidence, not a numerical ARC reproduction.
 
 - Initial Python 3.12 CPU suite: **144 passed**. After the GPU-memory correction:
   **146 passed, 1 CUDA-only test skipped** on the local CPU host.
+- Current suite after shutdown monitoring, private accumulator offload, SDPA
+  selection, and checkpoint-stop preservation: **158 passed, 2 CUDA-only
+  tests skipped**. [Current hosted CI passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42249791037)
+  for source commit `4894ea4`.
 - Source distribution and wheel built successfully.
 - The installed wheel ran the offline synthetic smoke command from outside the
   source checkout and restored its checkpoint/RNG successfully.
@@ -23,7 +27,8 @@ updates, and exact checkpoint continuation through real optimizer steps.
 Checkpoints with zero accepted outer updates remain explicitly untrained.
 
 The fixed pretrained model revision is accessible after authentication and
-loaded in the first CUDA attempt. That attempt failed with OOM while allocating
-audit snapshots. The corrected CUDA preflight and benchmark measurements remain
-pending; see [experiment status](EXPERIMENT_STATUS.md). CPU success does not
+loaded in CUDA attempts. Failures and corrections are recorded in
+[experiment status](EXPERIMENT_STATUS.md). Subsequent A100/H100 requests did not
+obtain allocation and were terminated; final account burn was zero. Successful
+80 GB preflight and benchmark measurements remain pending. CPU success does not
 establish GPU memory fit, semantic-judge quality, or the paper's reported accuracy.

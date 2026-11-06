@@ -19,6 +19,12 @@ allocated, another 532 MiB requested). Its terminal failure and zero account
 burn rate were verified by the attached launcher. Follow-up changes offload
 unused private gradient accumulators, select the explicit SDPA attention
 backend, and preserve all checkpoint generation-stop tokens.
+The fourth L40S attempt was explicitly terminated to move validation to an
+A100/H100 with 80 GB. Both an A100 request and a subsequent H100 request
+remained in scheduling without application execution; the account catalogue
+reported both resource types unavailable. Both requests were terminated and
+the account burn rate was verified as zero. No successful pretrained preflight
+result is claimed. The next GPU run requires an allocated A100/H100 80 GB.
 
 | Component / experiment | Implementation and available evidence | Execution / reproduction status |
 | --- | --- | --- |
