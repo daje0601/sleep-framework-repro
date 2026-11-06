@@ -101,6 +101,22 @@ def test_generation_preserves_modes_and_state_and_enforces_token_budget():
         engine.generate("x", max_new_tokens=0)
 
 
+def test_generation_preserves_all_checkpoint_stop_tokens():
+    engine = build_engine()
+    engine.model.generation_config.eos_token_id = [2, 3]
+    observed = []
+
+    def generate(**kwargs):
+        observed.append(
+            kwargs.get("eos_token_id", engine.model.generation_config.eos_token_id)
+        )
+        return torch.cat([kwargs["input_ids"], torch.tensor([[2]])], dim=1)
+
+    engine.model.generate = generate
+    engine.generate("p", sample=False)
+    assert observed == [[2, 3]]
+
+
 def test_sft_explicit_learning_rate_updates_supplied_optimizer_groups():
     engine = build_engine()
     parameters = train_adapter(engine.model, "inner")

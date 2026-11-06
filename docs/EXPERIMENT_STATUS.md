@@ -13,6 +13,12 @@ The second preflight (`3f143bd`) failed before model loading because the shared
 object-volume Hugging Face cache returned an invalid `config.json`. Therefore
 it did not validate the memory correction. Both jobs reached terminal failure;
 the account's compute burn rate was verified as zero afterward.
+The third attempt (`923d9b3`) passed model loading and audit snapshot creation
+but exhausted GPU memory in the KS student attention forward (42.65 GiB
+allocated, another 532 MiB requested). Its terminal failure and zero account
+burn rate were verified by the attached launcher. Follow-up changes offload
+unused private gradient accumulators, select the explicit SDPA attention
+backend, and preserve all checkpoint generation-stop tokens.
 
 | Component / experiment | Implementation and available evidence | Execution / reproduction status |
 | --- | --- | --- |

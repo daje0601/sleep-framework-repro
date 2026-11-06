@@ -17,6 +17,7 @@ class ExperimentConfig:
     seed: int = 42
     device: str = "cuda"
     dtype: str = "float32"
+    attention_backend: str = "sdpa"
     levels: int = 2
     periods: tuple[int, ...] = (1, 4)
     rank: int = 64
@@ -116,6 +117,8 @@ class ExperimentConfig:
             raise ValueError(
                 "Unsupported dtype; float16 Adam requires a mixed-precision implementation"
             )
+        if obj.attention_backend not in ("eager", "sdpa"):
+            raise ValueError("attention_backend must be eager or sdpa")
         if obj.mode in ("sleep", "consolidation") and obj.dtype != "float32":
             raise ValueError(
                 "Memory base updates require float32 dtype until master-weight support is validated"

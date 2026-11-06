@@ -78,8 +78,9 @@ def build_model(cfg):
             cfg.model,
             revision=cfg.revision,
             dtype=getattr(torch, cfg.dtype),
-            attn_implementation="eager",
+            attn_implementation=cfg.attention_backend,
         )
+    model.set_attn_implementation(cfg.attention_backend)
     model = model.to(device=cfg.device, dtype=getattr(torch, cfg.dtype))
     model.config.use_cache = False
     model.eval()

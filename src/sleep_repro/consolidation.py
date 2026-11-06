@@ -88,6 +88,22 @@ def _cpu_snapshot(value):
     return copy.deepcopy(value)
 
 
+def _offload_accumulated_gradients(model: nn.Module) -> None:
+    """Move only private wake-gradient sums to CPU; forwards never read them.
+
+    Call on a teacher before creating the student, and on a student only after
+    applying its proposed sender updates. Parameters, routing buffers, counters,
+    and the live model stay on their original execution devices. State-dict
+    commit copies these values back into the live buffers on their own devices.
+    """
+    for chain in iter_memory_chains(model):
+        for stage in chain.stages:
+            for index, value in enumerate(stage.accumulated_gradients()):
+                stage.register_buffer(
+                    f"gradient_sum_{index}", value.detach().to(device="cpu", copy=True)
+                )
+
+
 def _commit(
     live: nn.Module,
     student: nn.Module,
@@ -163,10 +179,12 @@ def consolidate(
     rng = _rng_snapshot()
     try:
         teacher = copy.deepcopy(model).eval().requires_grad_(False)
-        student = copy.deepcopy(model).eval().requires_grad_(False)
-        # Snapshots can inherit stale .grad tensors from custom module deepcopy;
-        # explicitly discard them so frozen tensors never carry wake gradients.
+        # Teacher forwards never consume accumulation state. Release its GPU
+        # sums before allocating the second full execution-model snapshot.
         teacher.zero_grad(set_to_none=True)
+        _offload_accumulated_gradients(teacher)
+        student = copy.deepcopy(model).eval().requires_grad_(False)
+        # Snapshots can inherit stale .grad tensors from custom module deepcopy.
         student.zero_grad(set_to_none=True)
         teacher_before = _cpu_snapshot(teacher.state_dict())
         trainable = []
@@ -192,6 +210,9 @@ def consolidate(
             new_experts.append(new_index)
             chain.pending[sender_level] = False
             chain.update_counts[sender_level].add_(1)
+        # Sender SGD has now consumed its sums. Preserve all slower pending
+        # sums on CPU while the isolated student performs forward/backward.
+        _offload_accumulated_gradients(student)
         prospective_before = _cpu_snapshot(student.state_dict())
         trainable_names = {
             name

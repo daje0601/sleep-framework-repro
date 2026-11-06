@@ -400,3 +400,92 @@ def test_cpu_rollback_backup_restores_live_weights_after_partial_commit_failure(
             torch.testing.assert_close(
                 optimizer.state_dict()["state"][key][name], value, rtol=0, atol=0
             )
+
+
+def test_offloaded_accumulation_buffers_keep_independent_values_and_execution_parameters():
+    from sleep_repro.consolidation import _offload_accumulated_gradients
+
+    chain, x = setup_chain()
+    source = chain.stages[0].accumulated_gradients()[0]
+    expected = source.clone()
+    parameters = tuple(chain.parameters())
+    with torch.no_grad():
+        output_before = chain(x).clone()
+    _offload_accumulated_gradients(chain)
+    stored = chain.stages[0].accumulated_gradients()[0]
+    assert stored.device.type == "cpu"
+    assert stored.data_ptr() != source.data_ptr()
+    source.zero_()
+    torch.testing.assert_close(stored, expected, rtol=0, atol=0)
+    assert all(
+        actual is before for actual, before in zip(chain.parameters(), parameters)
+    )
+    with torch.no_grad():
+        torch.testing.assert_close(chain(x), output_before, rtol=0, atol=0)
+
+
+@pytest.mark.parametrize(
+    "device",
+    [
+        "cpu",
+        pytest.param(
+            "cuda",
+            marks=pytest.mark.skipif(
+                not torch.cuda.is_available(), reason="CUDA unavailable"
+            ),
+        ),
+    ],
+)
+def test_private_accumulation_offload_preserves_slower_values_and_live_buffer_device(
+    device,
+):
+    chain, x = setup_chain()
+    chain = chain.to(device)
+    x = x.to(device)
+    before = [
+        tuple(value.detach().cpu().clone() for value in stage.accumulated_gradients())
+        for stage in chain.stages
+    ]
+    assert any(torch.count_nonzero(value) for value in before[1])
+    seen = []
+
+    def objective(teacher, student):
+        for private in (teacher, student):
+            assert all(
+                parameter.device.type == device for parameter in private.parameters()
+            )
+            for stage in private.stages:
+                assert all(
+                    value.device.type == "cpu"
+                    for value in stage.accumulated_gradients()
+                )
+                assert stage.active.device.type == device
+        for level, stage in enumerate(teacher.stages):
+            for actual, expected in zip(stage.accumulated_gradients(), before[level]):
+                torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+        for actual, expected in zip(
+            student.stages[1].accumulated_gradients(), before[1]
+        ):
+            torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+        assert all(
+            value.device.type == device
+            for stage in chain.stages
+            for value in stage.accumulated_gradients()
+        )
+        seen.append(True)
+        return (student(x) - teacher(x)).square().mean()
+
+    result = consolidate(chain, 0, objective, base_lr=0.03, expert_lr=0.01, steps=2)
+    assert result.committed and seen
+    assert all(
+        value.device.type == device
+        for stage in chain.stages
+        for value in stage.accumulated_gradients()
+    )
+    assert all(
+        not torch.count_nonzero(value)
+        for value in chain.stages[0].accumulated_gradients()
+    )
+    for actual, expected in zip(chain.stages[1].accumulated_gradients(), before[1]):
+        torch.testing.assert_close(actual.cpu(), expected, rtol=0, atol=0)
+    assert chain.stages[1].gradient_count.item() == 1

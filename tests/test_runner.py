@@ -111,3 +111,27 @@ def test_wake_episode_does_not_modify_policy():
     for k, v in before.items():
         torch.testing.assert_close(model.state_dict()[k], v)
     assert any("consolidation" == e["event"] for e in events)
+
+
+def test_attention_backend_is_explicit_and_preserves_masked_forward():
+    import copy
+    from sleep_repro.runtime import encode_batch, train_adapter
+
+    cfg = ExperimentConfig.from_dict(
+        {**small_config().to_dict(), "attention_backend": "sdpa"}
+    )
+    model, tok = build_model(cfg)
+    assert model.config._attn_implementation == "sdpa"
+    eager = copy.deepcopy(model)
+    eager.set_attn_implementation("eager")
+    batch = encode_batch(tok, [("p:", "1"), ("longer:", "234")], "cpu", cfg.max_length)
+    losses = []
+    grads = []
+    for instance in (model, eager):
+        parameters = train_adapter(instance, "inner")
+        output = instance(**batch, use_cache=False)
+        losses.append(output.loss.detach())
+        grads.append(torch.autograd.grad(output.loss, parameters))
+    torch.testing.assert_close(losses[0], losses[1], atol=1e-6, rtol=1e-5)
+    for left, right in zip(grads[0], grads[1], strict=True):
+        torch.testing.assert_close(left, right, atol=1e-6, rtol=1e-4)

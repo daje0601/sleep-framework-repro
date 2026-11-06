@@ -40,6 +40,11 @@ student execution models stay on the configured device. Accumulated wake
 gradients remain in checkpointed buffers; redundant parameter `.grad` tensors
 are released before snapshots. This trades host RAM and transfer time for GPU
 memory without changing the optimization or commit rules.
+Private teacher/student accumulation buffers also reside on CPU after the
+prospective update: forward calls never use these buffers, and commit copies
+their exact values back to the live device. The declared `attention_backend`
+defaults to PyTorch SDPA, with `eager` available for comparison. See the
+[Transformers backend interface](https://huggingface.co/docs/transformers/attention_interface).
 
 ## Knowledge Seeding and Learning to Imitate
 
@@ -58,6 +63,8 @@ prompt-plus-generation budgets fail explicitly rather than silently truncating
 ARC information. The same configured temperature currently controls sampled
 generation and distillation. That coupling is a declared implementation choice
 that should be tested before a locked numerical comparison.
+Generation preserves the pinned checkpoint's complete EOS/turn-end token
+configuration; it does not replace it with the tokenizer's single EOS ID.
 
 ## Dreaming and episodic learning
 
