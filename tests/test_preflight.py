@@ -57,6 +57,7 @@ def test_cpu_preflight_executes_real_gradients_and_checkpoint_without_gpu_claim(
     assert report["memory_base_delta_l1"] > 0
     assert report["checkpoint_resume_verified"] is True
     assert report["fixture_update"]["accepted_policy_update"] is False
+    assert torch.load(tmp_path / "preflight" / "fixture_checkpoint.pt", weights_only=True)["purpose"] == "diagnostic"
     assert report["task_id"] == "unit-training-fixture"
     assert json.loads((tmp_path / "preflight" / "preflight.json").read_text())["passed"]
 

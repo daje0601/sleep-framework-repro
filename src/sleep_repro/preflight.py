@@ -128,7 +128,7 @@ def preflight(cfg, output) -> dict:
     inner_parameters = train_adapter(episode, "inner")
     inner_before = _snapshot(inner_parameters)
     inner_losses = engine.sft(
-        examples_for(support, fixture),
+        examples_for(support, fixture, cfg=cfg),
         adapter="inner",
         epochs=fixture.epochs,
         lr=cfg.inner_lr,
@@ -159,13 +159,17 @@ def preflight(cfg, output) -> dict:
     checkpoint = output / "fixture_checkpoint.pt"
     # Zero accepted outer updates prevents treating this forced fixture as a
     # genuinely trained Sleep/self-edit checkpoint in later evaluation.
-    save_checkpoint(checkpoint, policy, optimizer, cfg, 1, outer_updates=0)
+    save_checkpoint(
+        checkpoint, policy, optimizer, cfg, 1, outer_updates=0, purpose="diagnostic"
+    )
     expected_rng = _rng_probe(device)
     one_parameter = outer_parameters[0]
     expected_parameter = one_parameter.detach().clone()
     with torch.no_grad():
         one_parameter.add_(1)
-    restored = load_checkpoint(checkpoint, policy, optimizer, cfg)
+    restored = load_checkpoint(
+        checkpoint, policy, optimizer, cfg, allow_diagnostic=True
+    )
     if expected_rng != _rng_probe(device) or not torch.equal(
         one_parameter, expected_parameter
     ):

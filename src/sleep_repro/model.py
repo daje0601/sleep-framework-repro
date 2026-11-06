@@ -70,11 +70,19 @@ def wrap_llama_mlps(
 
 
 def configure_wake_training(model: nn.Module) -> None:
-    """Freeze the backbone/experts; wake gradients accumulate on stage bases."""
+    """Accumulate base gradients while keeping nested policy/inner LoRA frozen."""
+    from .runtime import LoRALinear
+
     model.requires_grad_(False)
     for chain in iter_memory_chains(model):
         for stage in chain.stages:
             stage.base.requires_grad_(True)
+            # FFN-target adapters live inside the always-on base, but episode
+            # wake SGD owns only its backbone weights and appended base branch.
+            for module in stage.base.modules():
+                if isinstance(module, LoRALinear):
+                    for name in ("policy_a", "policy_b", "inner_a", "inner_b"):
+                        getattr(module, name).requires_grad_(False)
 
 
 def record_wake(model: nn.Module) -> tuple[int, ...]:

@@ -5,6 +5,11 @@ in *Language Models Need Sleep*, Table 4 and Appendix B.3. Data preparation and
 CPU correctness checks do not establish a quantitative reproduction. The
 authors' exact task manifest and every baseline recipe have not been recovered.
 
+The [v2 audit](PROTOCOL_V2.md) records opt-in training corrections and remaining
+differences. The separately prepared [upstream SEAL baseline](SEAL_BASELINE.md)
+uses two voted guesses per test subtask; the independent runner metric below
+uses one grid. They must not be presented as interchangeable measurements.
+
 ## Prepare and verify the data
 
 From the repository root, run:

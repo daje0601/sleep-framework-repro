@@ -18,7 +18,7 @@ from torch import Tensor, nn
 
 from .arc import Grid, Pair, Task, format_prompt, parse_grid_response
 from .objectives import composite_rewards, lti_loss
-from .runtime import encode_batch, train_adapter
+from .runtime import encode_batch, encode_prompt, train_adapter
 
 
 @contextmanager
@@ -49,14 +49,25 @@ class CausalEngine:
         return min(self.cfg.max_length, model_limit)
 
     def _generate(
-        self, model, prompt: str, max_new_tokens: int | None = None, sample: bool = True
+        self,
+        model,
+        prompt: str,
+        max_new_tokens: int | None = None,
+        sample: bool = True,
+        *,
+        assistant_prefix: str = "",
     ) -> str:
         budget = self.cfg.max_new_tokens if max_new_tokens is None else max_new_tokens
         if type(budget) is not int or budget <= 0:
             raise ValueError("generation token budget must be a positive integer")
         if not isinstance(prompt, str):
             raise ValueError("generation prompt must be a string")
-        ids = self.tokenizer.encode(prompt, add_special_tokens=True)
+        ids = encode_prompt(
+            self.tokenizer,
+            prompt,
+            self.cfg.prompt_format,
+            assistant_prefix=assistant_prefix,
+        )
         if not ids or len(ids) + budget > self._limit(model):
             raise ValueError(
                 f"prompt length {len(ids)} plus generation budget {budget} exceeds context length {self._limit(model)}; truncation is forbidden"
@@ -106,10 +117,32 @@ class CausalEngine:
         )
         if not math.isfinite(rate) or rate <= 0:
             raise ValueError("learning rate must be positive and finite")
-        batches = self._batches(examples)
-        total_tokens = sum(
-            int((batch["labels"][:, 1:] != -100).sum()) for batch in batches
+        if not examples:
+            raise ValueError("Empty examples")
+        effective_size = (
+            len(examples)
+            if self.cfg.sft_update_mode == "full-dataset-v1"
+            else (
+                self.cfg.effective_batch_size
+                if adapter == "inner"
+                else self.cfg.outer_effective_batch_size
+            )
         )
+        required_steps = math.ceil(len(examples) / effective_size) * epochs
+        if required_steps > self.cfg.sft_max_steps:
+            raise ValueError(
+                f"SFT needs {required_steps} optimizer steps, exceeding limit {self.cfg.sft_max_steps}"
+            )
+        # Invalid later examples must not partially update the live outer policy.
+        # Validate on CPU before touching parameters/optimizer; retain no tensors.
+        for example in examples:
+            encode_batch(
+                self.tokenizer,
+                [example],
+                "cpu",
+                self._limit(self.model),
+                prompt_format=self.cfg.prompt_format,
+            )
         parameters = train_adapter(self.model, adapter)
         if not parameters:
             raise ValueError("model has no selected LoRA adapter parameters")
@@ -129,26 +162,39 @@ class CausalEngine:
         try:
             self.model.train()
             for _ in range(epochs):
-                self.model.zero_grad(set_to_none=True)
-                total_loss = 0.0
-                for batch in batches:
-                    weight = int((batch["labels"][:, 1:] != -100).sum()) / total_tokens
-                    loss = self.model(**batch, use_cache=False).loss * weight
-                    if not torch.isfinite(loss):
-                        raise FloatingPointError("nonfinite SFT loss")
-                    loss.backward()
-                    total_loss += float(loss.detach())
-                if any(
-                    p.grad is not None and not torch.isfinite(p.grad).all()
-                    for p in parameters
-                ):
-                    raise FloatingPointError("nonfinite SFT gradient")
-                optimizer.step()
-                if any(not torch.isfinite(p).all() for p in parameters):
-                    raise FloatingPointError(
-                        "nonfinite SFT parameter after optimizer step"
+                order = (
+                    range(len(examples))
+                    if self.cfg.sft_update_mode == "full-dataset-v1"
+                    else torch.randperm(len(examples)).tolist()
+                )
+                ordered = [examples[i] for i in order]
+                for start in range(0, len(ordered), effective_size):
+                    batches = self._batches(ordered[start : start + effective_size])
+                    total_tokens = sum(
+                        int((b["labels"][:, 1:] != -100).sum()) for b in batches
                     )
-                losses.append(total_loss)
+                    self.model.zero_grad(set_to_none=True)
+                    total_loss = 0.0
+                    for batch in batches:
+                        weight = (
+                            int((batch["labels"][:, 1:] != -100).sum()) / total_tokens
+                        )
+                        loss = self.model(**batch, use_cache=False).loss * weight
+                        if not torch.isfinite(loss):
+                            raise FloatingPointError("nonfinite SFT loss")
+                        loss.backward()
+                        total_loss += float(loss.detach())
+                    if any(
+                        p.grad is not None and not torch.isfinite(p.grad).all()
+                        for p in parameters
+                    ):
+                        raise FloatingPointError("nonfinite SFT gradient")
+                    optimizer.step()
+                    if any(not torch.isfinite(p).all() for p in parameters):
+                        raise FloatingPointError(
+                            "nonfinite SFT parameter after optimizer step"
+                        )
+                    losses.append(total_loss)
         finally:
             for module, training in modes:
                 module.training = training
@@ -164,6 +210,7 @@ class CausalEngine:
                 examples[i : i + size],
                 self.device,
                 self._limit(self.model),
+                prompt_format=self.cfg.prompt_format,
             )
             for i in range(0, len(examples), size)
         ]
@@ -282,9 +329,8 @@ class CausalEngine:
                 suffix = self.tokenizer.decode(
                     tokens[prefix_length:], skip_special_tokens=True
                 )
-                conditioned_prompt = prompt + prefix
-                completion = self._generate(student, conditioned_prompt)
-                on_policy.append((conditioned_prompt, completion))
+                completion = self._generate(student, prompt, assistant_prefix=prefix)
+                on_policy.append((prompt, completion, prefix))
                 on_references.append(suffix)
         losses = []
         with _evaluation_mode(teacher), _evaluation_mode(student):
@@ -299,8 +345,9 @@ class CausalEngine:
                     trajectories,
                     self.device,
                     min(self._limit(teacher), self._limit(student)),
+                    prompt_format=self.cfg.prompt_format,
                 )
-                predictions = [completion for _, completion in trajectories]
+                predictions = [example[1] for example in trajectories]
                 rewards = composite_rewards(
                     predictions,
                     references,

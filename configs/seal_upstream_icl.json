@@ -1,0 +1,89 @@
+{
+  "attempts": 1,
+  "integration_patch_version": 2,
+  "mode": "icl",
+  "model": "meta-llama/Llama-3.2-1B-Instruct",
+  "model_revision": "9213176726f574b556790deb65791e0c5aa438b6",
+  "protocol_label": "official SEAL baseline recipe on reconstructed 11/8 task manifest",
+  "schema_version": 1,
+  "seal_commit": "6d9c9f9ee392c6cc618e771f399d436d190f6ca4",
+  "seed": 0,
+  "source_files": {
+    "LICENSE": {
+      "sha256": "ad4011ae1b9ecc3dcb417ac24341f6345d32cd6664d6e425a7a7f8381bddfa59",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/LICENSE"
+    },
+    "few-shot/arclib/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/__init__.py"
+    },
+    "few-shot/arclib/arc.py": {
+      "sha256": "8e110325649b2918e9d6f55b283c08692051cd7733e88aff0a23f89a3b623e90",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/arc.py"
+    },
+    "few-shot/arclib/augmenters.py": {
+      "sha256": "caac4e5f888dba3c69149d4298dfb3360ff4759bf983489c7952bc9e00c34178",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/augmenters.py"
+    },
+    "few-shot/arclib/eval.py": {
+      "sha256": "6ad058c66f1b3f2886c40e83f77c8129ada3e3528bab813746f166dfa5b67bb5",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/eval.py"
+    },
+    "few-shot/arclib/messagers.py": {
+      "sha256": "073f7ae74ec2ab12e8494c1e41a62003dcce1e67fa04b365482c2ceff8ab6978",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/messagers.py"
+    },
+    "few-shot/arclib/representers.py": {
+      "sha256": "adb671f8a2129b6010b52dfb9fd0bbf0e1fc6912fb94322ca997289378ed3cf7",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/representers.py"
+    },
+    "few-shot/arclib/update_model.py": {
+      "sha256": "91a95c977b6f8388a0915354089a4c54d7f5d1729cc33229d7bf7c9127cc3a3b",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/update_model.py"
+    },
+    "few-shot/arclib/voting.py": {
+      "sha256": "69828dc40293403eb8084f40ff63c547869f3a8924422eca95a596f2d7be9c10",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/arclib/voting.py"
+    },
+    "few-shot/eval-self-edits-baseline.py": {
+      "sha256": "f8020b09a9bab5ce4252b4ec336ea39c725f8410f9faf077b0fd460826e11d14",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/eval-self-edits-baseline.py"
+    },
+    "few-shot/eval-self-edits.py": {
+      "sha256": "d7df4d22cf47e7227113c5fb0664464841898021eb41abae78b209d21b87f2fc",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/eval-self-edits.py"
+    },
+    "few-shot/inference/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/inference/__init__.py"
+    },
+    "few-shot/inference/engine.py": {
+      "sha256": "cec0fa88b5e71b937250d53229756bbd8810befdb66d4452abe569693e098654",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/inference/engine.py"
+    },
+    "few-shot/inference/engine_no_lora.py": {
+      "sha256": "16ce2f5bba1eee7b179fa857027e89820ceabcfb9b033e1aa1eab5a856b9243b",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/inference/engine_no_lora.py"
+    },
+    "few-shot/inference/preprocess.py": {
+      "sha256": "f16c24071451f9d7a41855ffd68431fa434f3dbfdd599a5073164332459947f7",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/inference/preprocess.py"
+    },
+    "few-shot/ttt.py": {
+      "sha256": "8b215ce33d62904b1e1d8883602da076a364b103ca90f32e046fc0ef1a15b45d",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/ttt.py"
+    },
+    "few-shot/utils/__init__.py": {
+      "sha256": "41d042bc51dbb9dad3e6f0bd5a9c44c4128eb3ad4bd0a995dfb10f7632552525",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/utils/__init__.py"
+    },
+    "few-shot/utils/np_cache.py": {
+      "sha256": "d4ea2a30476ef4cc2268ed3ce8764f3b07e8626c288c525f491c7d0293fc5a05",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/few-shot/utils/np_cache.py"
+    },
+    "requirements.txt": {
+      "sha256": "1425fd5204d1479c65751f4a5819fda9eb65b3dfa7f80bd0d345253add86dfbd",
+      "url": "https://raw.githubusercontent.com/Continual-Intelligence/SEAL/6d9c9f9ee392c6cc618e771f399d436d190f6ca4/requirements.txt"
+    }
+  }
+}

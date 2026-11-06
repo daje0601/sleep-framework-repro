@@ -2,7 +2,7 @@
 
 An **unofficial, independent ARC reconstruction** of [Language Models Need Sleep](https://arxiv.org/html/2606.03979v2). This repository implements a runnable interpretation of the method and records its reconstruction choices. It is not affiliated with Google or the paper authors.
 
-**No quantitative paper result has been reproduced.** The first pretrained GPU preflight failed with out-of-memory; a correction moves diagnostic snapshots to CPU. CPU tests and a tiny random-model smoke check exercise correctness; they are not ARC benchmark evidence. See [experiment status](docs/EXPERIMENT_STATUS.md).
+**No quantitative paper result has been reproduced.** Pretrained preflights encountered memory/cache failures; subsequent 80 GB requests have not obtained allocation. CPU tests and a tiny random-model smoke check exercise correctness; they are not ARC benchmark evidence. See [experiment status](docs/EXPERIMENT_STATUS.md).
 
 ## What is implemented
 
@@ -15,9 +15,16 @@ The PyTorch implementation combines scheduled memory stages, transactional conso
 | `ttt` | Inner LoRA on visible pairs with an identity augmentation directive | Not run |
 | `self_edit` | Learned JSON directives and inner LoRA, without CMS | Not run |
 | `consolidation` | Wake and consolidation without dreaming | Not run |
-| Official SEAL baseline | External recipe; not implemented here | Not run |
+| Pinned upstream SEAL ICL/TTT | Verified source package, explicit integration patch and commands; separate environment required | Not run |
 
 `self_edit` differs from official SEAL and must retain its own label. The initial target is the paper's ARC experiment; reasoning, knowledge incorporation, continual learning, translation, and long-context benchmarks remain outside the implemented experiment scope.
+
+The [upstream audit and v2 variants](docs/PROTOCOL_V2.md) document differences in
+chat formatting, optimizer updates, contextual examples, adapter targets, and
+evaluation metrics. The opt-in `arc_*_v2.json` configs correct several training
+differences; they remain independent reconstructions. The [upstream baseline
+package](docs/SEAL_BASELINE.md) preserves SEAL's two-guess voting metric separately
+from this runner's one-grid metric.
 
 ## Install and run CPU checks
 

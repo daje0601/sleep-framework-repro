@@ -37,11 +37,18 @@ result is claimed. The next GPU run requires an allocated A100/H100 80 GB.
 | Hosted CPU CI | Offline tests, synthetic CLI smoke, package build and uploaded evidence | [Initial public run passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42244614666) on commit `9091350` |
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
-| Official SEAL baseline | Upstream recipe identified and cited | External baseline not implemented or executed here |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | GPU attempts failed with OOM and then cache corruption; successful preflight and quantitative comparison pending |
+| Pinned upstream SEAL ICL/TTT baseline | SHA256-verified source package, explicit integration patch, separate setup/run commands and metric summary | Actual preparation exercised; dependency compatibility and GPU execution not yet validated |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | GPU attempts failed with memory/cache errors; subsequent 80 GB requests awaited capacity; successful preflight and quantitative comparison pending |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 ## Evidence that must accompany a result
+
+The [upstream audit](PROTOCOL_V2.md) found additional scientific differences:
+legacy full-dataset optimizer steps, raw prompts, isolated training pairs,
+q/v-only adapters, and a one-grid evaluation metric. Opt-in v2 settings correct
+the first four areas; they do not implement SEAL's complete augmentation,
+scheduler, directive schema, or two-guess voting. A successful GPU preflight
+alone would therefore still not establish numerical reproduction.
 
 The CLI records resolved configuration, available source/model revisions,
 dependency versions, parameter counts, data hashes, episode and attempt records,

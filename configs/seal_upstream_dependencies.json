@@ -1,0 +1,654 @@
+{
+  "audit_kind": "official PyPI metadata only; not a complete resolver or runtime validation",
+  "binary_constraints": [
+    "PyPI vllm 0.9.1 publishes only a manylinux1 x86_64 wheel; no macOS or aarch64 wheel in that release metadata.",
+    "PyPI flashinfer-python 0.2.2 publishes no wheel; only a source distribution.",
+    "The generated setup requires python3.11 and venv; availability is not guaranteed by the current Python 3.12 Cloud image."
+  ],
+  "confirmed_environment_conflicts": [
+    "Current independent-runner torch 2.15.0 differs from required torch 2.7.0.",
+    "Current independent-runner transformers 5.22.1 differs from required transformers 4.52.4.",
+    "Current independent-runner numpy 2.5.4 differs from required numpy 2.2.6.",
+    "On Python 3.12, vllm 0.9.1 requires setuptools >=77.0.3,<80; current Cloud direct pin setuptools 84.2.1 is incompatible."
+  ],
+  "direct_pin_conflicts": [],
+  "not_validated": [
+    "full transitive resolution",
+    "installation and source builds",
+    "Linux image digest and Python executable availability",
+    "NVIDIA driver/CUDA binary compatibility",
+    "FlashInfer kernel compilation",
+    "vLLM model and five-target LoRA loading"
+  ],
+  "observed_date": "2026-11-07",
+  "packages": {
+    "accelerate": {
+      "active_dependencies_python311_linux_x86_64": [
+        "numpy<3.0.0,>=1.17",
+        "packaging>=20.0",
+        "psutil",
+        "pyyaml",
+        "torch>=2.0.0",
+        "huggingface-hub>=0.21.0",
+        "safetensors>=0.4.3"
+      ],
+      "metadata_sha256": "f770b0b596b71428a7dea9ef5337c47a2b4b9ba5890723935f73924c712fccd4",
+      "metadata_url": "https://pypi.org/pypi/accelerate/1.7.0/json",
+      "requires_python": ">=3.9.0",
+      "source_distributions": [
+        "accelerate-1.7.0.tar.gz"
+      ],
+      "version": "1.7.0",
+      "wheels": [
+        "accelerate-1.7.0-py3-none-any.whl"
+      ]
+    },
+    "datasets": {
+      "active_dependencies_python311_linux_x86_64": [
+        "filelock",
+        "numpy>=1.17",
+        "pyarrow>=15.0.0",
+        "dill<0.3.9,>=0.3.0",
+        "pandas",
+        "requests>=2.32.2",
+        "tqdm>=4.66.3",
+        "xxhash",
+        "multiprocess<0.70.17",
+        "fsspec[http]<=2025.3.0,>=2023.1.0",
+        "huggingface-hub>=0.24.0",
+        "packaging",
+        "pyyaml>=5.1"
+      ],
+      "metadata_sha256": "729c2162ce85db666eb816d2843a4f7beab142071abb4d2561fc0e463b13c168",
+      "metadata_url": "https://pypi.org/pypi/datasets/3.6.0/json",
+      "requires_python": ">=3.9.0",
+      "source_distributions": [
+        "datasets-3.6.0.tar.gz"
+      ],
+      "version": "3.6.0",
+      "wheels": [
+        "datasets-3.6.0-py3-none-any.whl"
+      ]
+    },
+    "flashinfer-python": {
+      "active_dependencies_python311_linux_x86_64": [
+        "numpy",
+        "torch",
+        "ninja"
+      ],
+      "metadata_sha256": "bda0390573a826b17759bc480c30de8da39747348aa4f7f422ef2a4c57e74703",
+      "metadata_url": "https://pypi.org/pypi/flashinfer-python/0.2.2/json",
+      "requires_python": "<4.0,>=3.8",
+      "source_distributions": [
+        "flashinfer_python-0.2.2.tar.gz"
+      ],
+      "version": "0.2.2",
+      "wheels": []
+    },
+    "ipdb": {
+      "active_dependencies_python311_linux_x86_64": [
+        "ipython (>=7.31.1) ; python_version >= \"3.11\"",
+        "decorator ; python_version >= \"3.11\""
+      ],
+      "metadata_sha256": "aeaa317158a81e2819bb3ee19fdd3e52f59125b63c1a67771f1262f319e7704b",
+      "metadata_url": "https://pypi.org/pypi/ipdb/0.13.13/json",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
+      "source_distributions": [
+        "ipdb-0.13.13.tar.gz"
+      ],
+      "version": "0.13.13",
+      "wheels": [
+        "ipdb-0.13.13-py3-none-any.whl"
+      ]
+    },
+    "litellm": {
+      "active_dependencies_python311_linux_x86_64": [
+        "aiohttp",
+        "click",
+        "httpx>=0.23.0",
+        "importlib-metadata>=6.8.0",
+        "jinja2<4.0.0,>=3.1.2",
+        "jsonschema<5.0.0,>=4.22.0",
+        "openai>=1.68.2",
+        "pydantic<3.0.0,>=2.0.0",
+        "python-dotenv>=0.2.0",
+        "tiktoken>=0.7.0",
+        "tokenizers"
+      ],
+      "metadata_sha256": "1a5ad942c433940e41dbc4bce89b17e429748c959c7898f26af2098582693530",
+      "metadata_url": "https://pypi.org/pypi/litellm/1.72.4/json",
+      "requires_python": "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8",
+      "source_distributions": [
+        "litellm-1.72.4.tar.gz"
+      ],
+      "version": "1.72.4",
+      "wheels": [
+        "litellm-1.72.4-py3-none-any.whl"
+      ]
+    },
+    "matplotlib": {
+      "active_dependencies_python311_linux_x86_64": [
+        "contourpy>=1.0.1",
+        "cycler>=0.10",
+        "fonttools>=4.22.0",
+        "kiwisolver>=1.3.1",
+        "numpy>=1.23",
+        "packaging>=20.0",
+        "pillow>=8",
+        "pyparsing>=2.3.1",
+        "python-dateutil>=2.7"
+      ],
+      "metadata_sha256": "7582ee24999c2df084a07d4dca58ad5b6cf2b924e5a6da3a37ab235f747482e0",
+      "metadata_url": "https://pypi.org/pypi/matplotlib/3.10.3/json",
+      "requires_python": ">=3.10",
+      "source_distributions": [
+        "matplotlib-3.10.3.tar.gz"
+      ],
+      "version": "3.10.3",
+      "wheels": [
+        "matplotlib-3.10.3-cp310-cp310-macosx_10_12_x86_64.whl",
+        "matplotlib-3.10.3-cp310-cp310-macosx_11_0_arm64.whl",
+        "matplotlib-3.10.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "matplotlib-3.10.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "matplotlib-3.10.3-cp310-cp310-musllinux_1_2_x86_64.whl",
+        "matplotlib-3.10.3-cp310-cp310-win_amd64.whl",
+        "matplotlib-3.10.3-cp311-cp311-macosx_10_12_x86_64.whl",
+        "matplotlib-3.10.3-cp311-cp311-macosx_11_0_arm64.whl",
+        "matplotlib-3.10.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "matplotlib-3.10.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "matplotlib-3.10.3-cp311-cp311-musllinux_1_2_x86_64.whl",
+        "matplotlib-3.10.3-cp311-cp311-win_amd64.whl",
+        "matplotlib-3.10.3-cp312-cp312-macosx_10_13_x86_64.whl",
+        "matplotlib-3.10.3-cp312-cp312-macosx_11_0_arm64.whl",
+        "matplotlib-3.10.3-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "matplotlib-3.10.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "matplotlib-3.10.3-cp312-cp312-musllinux_1_2_x86_64.whl",
+        "matplotlib-3.10.3-cp312-cp312-win_amd64.whl",
+        "matplotlib-3.10.3-cp313-cp313-macosx_10_13_x86_64.whl",
+        "matplotlib-3.10.3-cp313-cp313-macosx_11_0_arm64.whl",
+        "matplotlib-3.10.3-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "matplotlib-3.10.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "matplotlib-3.10.3-cp313-cp313-musllinux_1_2_x86_64.whl",
+        "matplotlib-3.10.3-cp313-cp313t-macosx_10_13_x86_64.whl",
+        "matplotlib-3.10.3-cp313-cp313t-macosx_11_0_arm64.whl",
+        "matplotlib-3.10.3-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "matplotlib-3.10.3-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "matplotlib-3.10.3-cp313-cp313t-musllinux_1_2_x86_64.whl",
+        "matplotlib-3.10.3-cp313-cp313t-win_amd64.whl",
+        "matplotlib-3.10.3-cp313-cp313-win_amd64.whl",
+        "matplotlib-3.10.3-pp310-pypy310_pp73-macosx_10_15_x86_64.whl",
+        "matplotlib-3.10.3-pp310-pypy310_pp73-macosx_11_0_arm64.whl",
+        "matplotlib-3.10.3-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+      ]
+    },
+    "numpy": {
+      "active_dependencies_python311_linux_x86_64": [],
+      "metadata_sha256": "dbed1d6e66316f9a403aa115085c85678f22b8dc6e60faf65b43e2aa166b17fe",
+      "metadata_url": "https://pypi.org/pypi/numpy/2.2.6/json",
+      "requires_python": ">=3.10",
+      "source_distributions": [
+        "numpy-2.2.6.tar.gz"
+      ],
+      "version": "2.2.6",
+      "wheels": [
+        "numpy-2.2.6-cp310-cp310-macosx_10_9_x86_64.whl",
+        "numpy-2.2.6-cp310-cp310-macosx_11_0_arm64.whl",
+        "numpy-2.2.6-cp310-cp310-macosx_14_0_arm64.whl",
+        "numpy-2.2.6-cp310-cp310-macosx_14_0_x86_64.whl",
+        "numpy-2.2.6-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "numpy-2.2.6-cp310-cp310-musllinux_1_2_aarch64.whl",
+        "numpy-2.2.6-cp310-cp310-musllinux_1_2_x86_64.whl",
+        "numpy-2.2.6-cp310-cp310-win32.whl",
+        "numpy-2.2.6-cp310-cp310-win_amd64.whl",
+        "numpy-2.2.6-cp311-cp311-macosx_10_9_x86_64.whl",
+        "numpy-2.2.6-cp311-cp311-macosx_11_0_arm64.whl",
+        "numpy-2.2.6-cp311-cp311-macosx_14_0_arm64.whl",
+        "numpy-2.2.6-cp311-cp311-macosx_14_0_x86_64.whl",
+        "numpy-2.2.6-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "numpy-2.2.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "numpy-2.2.6-cp311-cp311-musllinux_1_2_aarch64.whl",
+        "numpy-2.2.6-cp311-cp311-musllinux_1_2_x86_64.whl",
+        "numpy-2.2.6-cp311-cp311-win32.whl",
+        "numpy-2.2.6-cp311-cp311-win_amd64.whl",
+        "numpy-2.2.6-cp312-cp312-macosx_10_13_x86_64.whl",
+        "numpy-2.2.6-cp312-cp312-macosx_11_0_arm64.whl",
+        "numpy-2.2.6-cp312-cp312-macosx_14_0_arm64.whl",
+        "numpy-2.2.6-cp312-cp312-macosx_14_0_x86_64.whl",
+        "numpy-2.2.6-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "numpy-2.2.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "numpy-2.2.6-cp312-cp312-musllinux_1_2_aarch64.whl",
+        "numpy-2.2.6-cp312-cp312-musllinux_1_2_x86_64.whl",
+        "numpy-2.2.6-cp312-cp312-win32.whl",
+        "numpy-2.2.6-cp312-cp312-win_amd64.whl",
+        "numpy-2.2.6-cp313-cp313-macosx_10_13_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313-macosx_11_0_arm64.whl",
+        "numpy-2.2.6-cp313-cp313-macosx_14_0_arm64.whl",
+        "numpy-2.2.6-cp313-cp313-macosx_14_0_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "numpy-2.2.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313-musllinux_1_2_aarch64.whl",
+        "numpy-2.2.6-cp313-cp313-musllinux_1_2_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313t-macosx_10_13_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313t-macosx_11_0_arm64.whl",
+        "numpy-2.2.6-cp313-cp313t-macosx_14_0_arm64.whl",
+        "numpy-2.2.6-cp313-cp313t-macosx_14_0_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "numpy-2.2.6-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313t-musllinux_1_2_aarch64.whl",
+        "numpy-2.2.6-cp313-cp313t-musllinux_1_2_x86_64.whl",
+        "numpy-2.2.6-cp313-cp313t-win32.whl",
+        "numpy-2.2.6-cp313-cp313t-win_amd64.whl",
+        "numpy-2.2.6-cp313-cp313-win32.whl",
+        "numpy-2.2.6-cp313-cp313-win_amd64.whl",
+        "numpy-2.2.6-pp310-pypy310_pp73-macosx_10_15_x86_64.whl",
+        "numpy-2.2.6-pp310-pypy310_pp73-macosx_14_0_x86_64.whl",
+        "numpy-2.2.6-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "numpy-2.2.6-pp310-pypy310_pp73-win_amd64.whl"
+      ]
+    },
+    "openai": {
+      "active_dependencies_python311_linux_x86_64": [
+        "anyio<5,>=3.5.0",
+        "distro<2,>=1.7.0",
+        "httpx<1,>=0.23.0",
+        "jiter<1,>=0.4.0",
+        "pydantic<3,>=1.9.0",
+        "sniffio",
+        "tqdm>4",
+        "typing-extensions<5,>=4.11"
+      ],
+      "metadata_sha256": "5b645b90870660772db3c9403bb43b6072cc9341338b1beddb7ae7aba3d3327b",
+      "metadata_url": "https://pypi.org/pypi/openai/1.86.0/json",
+      "requires_python": ">=3.8",
+      "source_distributions": [
+        "openai-1.86.0.tar.gz"
+      ],
+      "version": "1.86.0",
+      "wheels": [
+        "openai-1.86.0-py3-none-any.whl"
+      ]
+    },
+    "peft": {
+      "active_dependencies_python311_linux_x86_64": [
+        "numpy>=1.17",
+        "packaging>=20.0",
+        "psutil",
+        "pyyaml",
+        "torch>=1.13.0",
+        "transformers",
+        "tqdm",
+        "accelerate>=0.21.0",
+        "safetensors",
+        "huggingface_hub>=0.25.0"
+      ],
+      "metadata_sha256": "720b846bcf0ccc2ee0d95115c52737580fc966a7f056eb455533ba869d5444a2",
+      "metadata_url": "https://pypi.org/pypi/peft/0.15.2/json",
+      "requires_python": ">=3.9.0",
+      "source_distributions": [
+        "peft-0.15.2.tar.gz"
+      ],
+      "version": "0.15.2",
+      "wheels": [
+        "peft-0.15.2-py3-none-any.whl"
+      ]
+    },
+    "pyzmq": {
+      "active_dependencies_python311_linux_x86_64": [],
+      "metadata_sha256": "de5200b038df66cba86b4fa77cc8b47476cfa0d56ec91e6ad254475987800066",
+      "metadata_url": "https://pypi.org/pypi/pyzmq/27.0.0/json",
+      "requires_python": ">=3.8",
+      "source_distributions": [
+        "pyzmq-27.0.0.tar.gz"
+      ],
+      "version": "27.0.0",
+      "wheels": [
+        "pyzmq-27.0.0-cp310-cp310-macosx_10_15_universal2.whl",
+        "pyzmq-27.0.0-cp310-cp310-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "pyzmq-27.0.0-cp310-cp310-musllinux_1_2_aarch64.whl",
+        "pyzmq-27.0.0-cp310-cp310-musllinux_1_2_i686.whl",
+        "pyzmq-27.0.0-cp310-cp310-musllinux_1_2_x86_64.whl",
+        "pyzmq-27.0.0-cp310-cp310-win32.whl",
+        "pyzmq-27.0.0-cp310-cp310-win_amd64.whl",
+        "pyzmq-27.0.0-cp310-cp310-win_arm64.whl",
+        "pyzmq-27.0.0-cp311-cp311-macosx_10_15_universal2.whl",
+        "pyzmq-27.0.0-cp311-cp311-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "pyzmq-27.0.0-cp311-cp311-musllinux_1_2_aarch64.whl",
+        "pyzmq-27.0.0-cp311-cp311-musllinux_1_2_i686.whl",
+        "pyzmq-27.0.0-cp311-cp311-musllinux_1_2_x86_64.whl",
+        "pyzmq-27.0.0-cp311-cp311-win32.whl",
+        "pyzmq-27.0.0-cp311-cp311-win_amd64.whl",
+        "pyzmq-27.0.0-cp311-cp311-win_arm64.whl",
+        "pyzmq-27.0.0-cp312-abi3-macosx_10_15_universal2.whl",
+        "pyzmq-27.0.0-cp312-abi3-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-cp312-abi3-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "pyzmq-27.0.0-cp312-abi3-musllinux_1_2_aarch64.whl",
+        "pyzmq-27.0.0-cp312-abi3-musllinux_1_2_i686.whl",
+        "pyzmq-27.0.0-cp312-abi3-musllinux_1_2_x86_64.whl",
+        "pyzmq-27.0.0-cp312-abi3-win32.whl",
+        "pyzmq-27.0.0-cp312-abi3-win_amd64.whl",
+        "pyzmq-27.0.0-cp312-abi3-win_arm64.whl",
+        "pyzmq-27.0.0-cp313-cp313t-macosx_10_15_universal2.whl",
+        "pyzmq-27.0.0-cp313-cp313t-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "pyzmq-27.0.0-cp313-cp313t-musllinux_1_2_aarch64.whl",
+        "pyzmq-27.0.0-cp313-cp313t-musllinux_1_2_i686.whl",
+        "pyzmq-27.0.0-cp313-cp313t-musllinux_1_2_x86_64.whl",
+        "pyzmq-27.0.0-cp313-cp313t-win32.whl",
+        "pyzmq-27.0.0-cp313-cp313t-win_amd64.whl",
+        "pyzmq-27.0.0-cp38-cp38-macosx_10_15_universal2.whl",
+        "pyzmq-27.0.0-cp38-cp38-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-cp38-cp38-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "pyzmq-27.0.0-cp38-cp38-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-cp38-cp38-musllinux_1_2_aarch64.whl",
+        "pyzmq-27.0.0-cp38-cp38-musllinux_1_2_i686.whl",
+        "pyzmq-27.0.0-cp38-cp38-musllinux_1_2_x86_64.whl",
+        "pyzmq-27.0.0-cp38-cp38-win32.whl",
+        "pyzmq-27.0.0-cp38-cp38-win_amd64.whl",
+        "pyzmq-27.0.0-cp39-cp39-macosx_10_15_universal2.whl",
+        "pyzmq-27.0.0-cp39-cp39-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "pyzmq-27.0.0-cp39-cp39-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-cp39-cp39-musllinux_1_2_aarch64.whl",
+        "pyzmq-27.0.0-cp39-cp39-musllinux_1_2_i686.whl",
+        "pyzmq-27.0.0-cp39-cp39-musllinux_1_2_x86_64.whl",
+        "pyzmq-27.0.0-cp39-cp39-win32.whl",
+        "pyzmq-27.0.0-cp39-cp39-win_amd64.whl",
+        "pyzmq-27.0.0-cp39-cp39-win_arm64.whl",
+        "pyzmq-27.0.0-pp310-pypy310_pp73-macosx_10_15_x86_64.whl",
+        "pyzmq-27.0.0-pp310-pypy310_pp73-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-pp310-pypy310_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-pp310-pypy310_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "pyzmq-27.0.0-pp310-pypy310_pp73-win_amd64.whl",
+        "pyzmq-27.0.0-pp311-pypy311_pp73-macosx_10_15_x86_64.whl",
+        "pyzmq-27.0.0-pp311-pypy311_pp73-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+        "pyzmq-27.0.0-pp311-pypy311_pp73-win_amd64.whl",
+        "pyzmq-27.0.0-pp38-pypy38_pp73-macosx_10_15_x86_64.whl",
+        "pyzmq-27.0.0-pp38-pypy38_pp73-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-pp38-pypy38_pp73-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "pyzmq-27.0.0-pp38-pypy38_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-pp38-pypy38_pp73-win_amd64.whl",
+        "pyzmq-27.0.0-pp39-pypy39_pp73-macosx_10_15_x86_64.whl",
+        "pyzmq-27.0.0-pp39-pypy39_pp73-manylinux2014_i686.manylinux_2_17_i686.whl",
+        "pyzmq-27.0.0-pp39-pypy39_pp73-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "pyzmq-27.0.0-pp39-pypy39_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "pyzmq-27.0.0-pp39-pypy39_pp73-win_amd64.whl"
+      ]
+    },
+    "rich": {
+      "active_dependencies_python311_linux_x86_64": [
+        "pygments<3.0.0,>=2.13.0",
+        "markdown-it-py>=2.2.0"
+      ],
+      "metadata_sha256": "c8f9269bccb97b93a83dc391819bc903195166b37dd2368d91f265bddc049b72",
+      "metadata_url": "https://pypi.org/pypi/rich/14.0.0/json",
+      "requires_python": ">=3.8.0",
+      "source_distributions": [
+        "rich-14.0.0.tar.gz"
+      ],
+      "version": "14.0.0",
+      "wheels": [
+        "rich-14.0.0-py3-none-any.whl"
+      ]
+    },
+    "scipy": {
+      "active_dependencies_python311_linux_x86_64": [
+        "numpy<2.5,>=1.23.5"
+      ],
+      "metadata_sha256": "952ee2f6cf47b68d4e27d5ab8aba8bae835c9742b8c4200ea1f0be01d1adf47a",
+      "metadata_url": "https://pypi.org/pypi/scipy/1.15.3/json",
+      "requires_python": ">=3.10",
+      "source_distributions": [
+        "scipy-1.15.3.tar.gz"
+      ],
+      "version": "1.15.3",
+      "wheels": [
+        "scipy-1.15.3-cp310-cp310-macosx_10_13_x86_64.whl",
+        "scipy-1.15.3-cp310-cp310-macosx_12_0_arm64.whl",
+        "scipy-1.15.3-cp310-cp310-macosx_14_0_arm64.whl",
+        "scipy-1.15.3-cp310-cp310-macosx_14_0_x86_64.whl",
+        "scipy-1.15.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "scipy-1.15.3-cp310-cp310-musllinux_1_2_aarch64.whl",
+        "scipy-1.15.3-cp310-cp310-musllinux_1_2_x86_64.whl",
+        "scipy-1.15.3-cp310-cp310-win_amd64.whl",
+        "scipy-1.15.3-cp311-cp311-macosx_10_13_x86_64.whl",
+        "scipy-1.15.3-cp311-cp311-macosx_12_0_arm64.whl",
+        "scipy-1.15.3-cp311-cp311-macosx_14_0_arm64.whl",
+        "scipy-1.15.3-cp311-cp311-macosx_14_0_x86_64.whl",
+        "scipy-1.15.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "scipy-1.15.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "scipy-1.15.3-cp311-cp311-musllinux_1_2_aarch64.whl",
+        "scipy-1.15.3-cp311-cp311-musllinux_1_2_x86_64.whl",
+        "scipy-1.15.3-cp311-cp311-win_amd64.whl",
+        "scipy-1.15.3-cp312-cp312-macosx_10_13_x86_64.whl",
+        "scipy-1.15.3-cp312-cp312-macosx_12_0_arm64.whl",
+        "scipy-1.15.3-cp312-cp312-macosx_14_0_arm64.whl",
+        "scipy-1.15.3-cp312-cp312-macosx_14_0_x86_64.whl",
+        "scipy-1.15.3-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "scipy-1.15.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "scipy-1.15.3-cp312-cp312-musllinux_1_2_aarch64.whl",
+        "scipy-1.15.3-cp312-cp312-musllinux_1_2_x86_64.whl",
+        "scipy-1.15.3-cp312-cp312-win_amd64.whl",
+        "scipy-1.15.3-cp313-cp313-macosx_10_13_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313-macosx_12_0_arm64.whl",
+        "scipy-1.15.3-cp313-cp313-macosx_14_0_arm64.whl",
+        "scipy-1.15.3-cp313-cp313-macosx_14_0_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "scipy-1.15.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313-musllinux_1_2_aarch64.whl",
+        "scipy-1.15.3-cp313-cp313-musllinux_1_2_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313t-macosx_10_13_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313t-macosx_12_0_arm64.whl",
+        "scipy-1.15.3-cp313-cp313t-macosx_14_0_arm64.whl",
+        "scipy-1.15.3-cp313-cp313t-macosx_14_0_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "scipy-1.15.3-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313t-musllinux_1_2_aarch64.whl",
+        "scipy-1.15.3-cp313-cp313t-musllinux_1_2_x86_64.whl",
+        "scipy-1.15.3-cp313-cp313t-win_amd64.whl",
+        "scipy-1.15.3-cp313-cp313-win_amd64.whl"
+      ]
+    },
+    "torch": {
+      "active_dependencies_python311_linux_x86_64": [
+        "filelock",
+        "typing-extensions>=4.10.0",
+        "sympy>=1.13.3",
+        "networkx",
+        "jinja2",
+        "fsspec",
+        "nvidia-cuda-nvrtc-cu12==12.6.77; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cuda-runtime-cu12==12.6.77; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cuda-cupti-cu12==12.6.80; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cudnn-cu12==9.5.1.17; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cublas-cu12==12.6.4.1; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cufft-cu12==11.3.0.4; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-curand-cu12==10.3.7.77; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cusolver-cu12==11.7.1.2; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cusparse-cu12==12.5.4.2; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cusparselt-cu12==0.6.3; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-nccl-cu12==2.26.2; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-nvtx-cu12==12.6.77; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-nvjitlink-cu12==12.6.85; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "nvidia-cufile-cu12==1.11.1.6; platform_system == \"Linux\" and platform_machine == \"x86_64\"",
+        "triton==3.3.0; platform_system == \"Linux\" and platform_machine == \"x86_64\""
+      ],
+      "metadata_sha256": "e3d92b50bbf5369b3e32373d90746834067c457f755982d2d57fd52b0adaca11",
+      "metadata_url": "https://pypi.org/pypi/torch/2.7.0/json",
+      "requires_python": ">=3.9.0",
+      "source_distributions": [],
+      "version": "2.7.0",
+      "wheels": [
+        "torch-2.7.0-cp310-cp310-manylinux_2_28_aarch64.whl",
+        "torch-2.7.0-cp310-cp310-manylinux_2_28_x86_64.whl",
+        "torch-2.7.0-cp310-cp310-win_amd64.whl",
+        "torch-2.7.0-cp310-none-macosx_11_0_arm64.whl",
+        "torch-2.7.0-cp311-cp311-manylinux_2_28_aarch64.whl",
+        "torch-2.7.0-cp311-cp311-manylinux_2_28_x86_64.whl",
+        "torch-2.7.0-cp311-cp311-win_amd64.whl",
+        "torch-2.7.0-cp311-none-macosx_11_0_arm64.whl",
+        "torch-2.7.0-cp312-cp312-manylinux_2_28_aarch64.whl",
+        "torch-2.7.0-cp312-cp312-manylinux_2_28_x86_64.whl",
+        "torch-2.7.0-cp312-cp312-win_amd64.whl",
+        "torch-2.7.0-cp312-none-macosx_11_0_arm64.whl",
+        "torch-2.7.0-cp313-cp313-manylinux_2_28_aarch64.whl",
+        "torch-2.7.0-cp313-cp313-manylinux_2_28_x86_64.whl",
+        "torch-2.7.0-cp313-cp313t-macosx_14_0_arm64.whl",
+        "torch-2.7.0-cp313-cp313t-manylinux_2_28_aarch64.whl",
+        "torch-2.7.0-cp313-cp313t-manylinux_2_28_x86_64.whl",
+        "torch-2.7.0-cp313-cp313t-win_amd64.whl",
+        "torch-2.7.0-cp313-cp313-win_amd64.whl",
+        "torch-2.7.0-cp313-none-macosx_11_0_arm64.whl",
+        "torch-2.7.0-cp39-cp39-manylinux_2_28_aarch64.whl",
+        "torch-2.7.0-cp39-cp39-manylinux_2_28_x86_64.whl",
+        "torch-2.7.0-cp39-cp39-win_amd64.whl",
+        "torch-2.7.0-cp39-none-macosx_11_0_arm64.whl"
+      ]
+    },
+    "tqdm": {
+      "active_dependencies_python311_linux_x86_64": [],
+      "metadata_sha256": "b7d32bbdf38a4f136c94c8e7723274895fcb58aa8dc241d054274d699a0f8f2a",
+      "metadata_url": "https://pypi.org/pypi/tqdm/4.67.1/json",
+      "requires_python": ">=3.7",
+      "source_distributions": [
+        "tqdm-4.67.1.tar.gz"
+      ],
+      "version": "4.67.1",
+      "wheels": [
+        "tqdm-4.67.1-py3-none-any.whl"
+      ]
+    },
+    "transformers": {
+      "active_dependencies_python311_linux_x86_64": [
+        "filelock",
+        "huggingface-hub<1.0,>=0.30.0",
+        "numpy>=1.17",
+        "packaging>=20.0",
+        "pyyaml>=5.1",
+        "regex!=2019.12.17",
+        "requests",
+        "tokenizers<0.22,>=0.21",
+        "safetensors>=0.4.3",
+        "tqdm>=4.27"
+      ],
+      "metadata_sha256": "e3dfb5034ad934d5776e65f4f366eedfc08bad0b1ead728d86a45f572f3cc430",
+      "metadata_url": "https://pypi.org/pypi/transformers/4.52.4/json",
+      "requires_python": ">=3.9.0",
+      "source_distributions": [
+        "transformers-4.52.4.tar.gz"
+      ],
+      "version": "4.52.4",
+      "wheels": [
+        "transformers-4.52.4-py3-none-any.whl"
+      ]
+    },
+    "trl": {
+      "active_dependencies_python311_linux_x86_64": [
+        "accelerate>=0.34.0",
+        "datasets>=3.0.0",
+        "transformers>=4.50.0"
+      ],
+      "metadata_sha256": "2bcdb4bc3ee107014cf3d15243e45a728425b477de283ecab08fc9660d6795a8",
+      "metadata_url": "https://pypi.org/pypi/trl/0.18.1/json",
+      "requires_python": ">=3.9",
+      "source_distributions": [
+        "trl-0.18.1.tar.gz"
+      ],
+      "version": "0.18.1",
+      "wheels": [
+        "trl-0.18.1-py3-none-any.whl"
+      ]
+    },
+    "vllm": {
+      "active_dependencies_python311_linux_x86_64": [
+        "regex",
+        "cachetools",
+        "psutil",
+        "sentencepiece",
+        "numpy",
+        "requests>=2.26.0",
+        "tqdm",
+        "blake3",
+        "py-cpuinfo",
+        "transformers>=4.51.1",
+        "huggingface-hub[hf_xet]>=0.32.0",
+        "tokenizers>=0.21.1",
+        "protobuf",
+        "fastapi[standard]>=0.115.0",
+        "aiohttp",
+        "openai>=1.52.0",
+        "pydantic>=2.10",
+        "prometheus_client>=0.18.0",
+        "pillow",
+        "prometheus-fastapi-instrumentator>=7.0.0",
+        "tiktoken>=0.6.0",
+        "lm-format-enforcer<0.11,>=0.10.11",
+        "llguidance<0.8.0,>=0.7.11; platform_machine == \"x86_64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\"",
+        "outlines==0.1.11",
+        "lark==1.2.2",
+        "xgrammar==0.1.19; platform_machine == \"x86_64\" or platform_machine == \"aarch64\"",
+        "typing_extensions>=4.10",
+        "filelock>=3.16.1",
+        "partial-json-parser",
+        "pyzmq>=25.0.0",
+        "msgspec",
+        "gguf>=0.13.0",
+        "mistral_common[opencv]>=1.5.4",
+        "opencv-python-headless>=4.11.0",
+        "pyyaml",
+        "einops",
+        "compressed-tensors==0.10.1",
+        "depyf==0.18.0",
+        "cloudpickle",
+        "watchfiles",
+        "python-json-logger",
+        "scipy",
+        "ninja",
+        "opentelemetry-sdk>=1.26.0",
+        "opentelemetry-api>=1.26.0",
+        "opentelemetry-exporter-otlp>=1.26.0",
+        "opentelemetry-semantic-conventions-ai>=0.4.1",
+        "numba==0.61.2; python_version > \"3.9\"",
+        "ray[cgraph]!=2.44.*,>=2.43.0",
+        "torch==2.7.0",
+        "torchaudio==2.7.0",
+        "torchvision==0.22.0",
+        "xformers==0.0.30; platform_system == \"Linux\" and platform_machine == \"x86_64\""
+      ],
+      "metadata_sha256": "d85335d83f206c9180a79b5ff3e89b3b2abedb4f6bcd2ec4251d9cb9a1793a90",
+      "metadata_url": "https://pypi.org/pypi/vllm/0.9.1/json",
+      "requires_python": "<3.13,>=3.9",
+      "source_distributions": [
+        "vllm-0.9.1.tar.gz"
+      ],
+      "version": "0.9.1",
+      "wheels": [
+        "vllm-0.9.1-cp38-abi3-manylinux1_x86_64.whl"
+      ]
+    }
+  },
+  "target_environment": {
+    "extra": "",
+    "implementation_name": "cpython",
+    "implementation_version": "3.11.9",
+    "os_name": "posix",
+    "platform_machine": "x86_64",
+    "platform_python_implementation": "CPython",
+    "platform_release": "",
+    "platform_system": "Linux",
+    "platform_version": "",
+    "python_full_version": "3.11.9",
+    "python_version": "3.11",
+    "sys_platform": "linux"
+  },
+  "upstream_requirements_sha256": "1425fd5204d1479c65751f4a5819fda9eb65b3dfa7f80bd0d345253add86dfbd"
+}

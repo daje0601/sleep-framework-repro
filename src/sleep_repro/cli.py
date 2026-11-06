@@ -74,9 +74,13 @@ def smoke(output):
     )
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    save_checkpoint(output / "checkpoint.pt", policy, outeropt, cfg, 1)
+    save_checkpoint(
+        output / "checkpoint.pt", policy, outeropt, cfg, 1, purpose="diagnostic"
+    )
     expected = torch.rand(4)
-    load_checkpoint(output / "checkpoint.pt", policy, outeropt, cfg)
+    load_checkpoint(
+        output / "checkpoint.pt", policy, outeropt, cfg, allow_diagnostic=True
+    )
     torch.testing.assert_close(torch.rand(4), expected)
     report = {
         **evidence(cfg, policy),

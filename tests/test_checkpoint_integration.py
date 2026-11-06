@@ -189,3 +189,52 @@ def test_all_invalid_training_dreams_keep_loaded_evaluation_policy_untrained(
         json.loads((evaluation_output / "summary.json").read_text())["policy_trained"]
         is False
     )
+
+
+def test_diagnostic_checkpoint_is_rejected_by_training_and_evaluation_but_explicit_roundtrip_works(tmp_path, monkeypatch):
+    cfg = small_config()
+    seed_all(45)
+    diagnostic, diagnostic_optimizer, engine = policy_state(cfg)
+    engine.sft([('Diagnostic input:', '[[1]]')], adapter='policy', optimizer=diagnostic_optimizer)
+    path = tmp_path / 'diagnostic.pt'
+    runner.save_checkpoint(path, diagnostic, diagnostic_optimizer, cfg, 1,
+                           outer_updates=0, purpose='diagnostic')
+    fresh, fresh_optimizer, _ = policy_state(cfg)
+    before = copy.deepcopy(fresh.state_dict())
+    rng_before = torch.get_rng_state().clone()
+    for evaluation in (False, True):
+        with pytest.raises(ValueError, match='diagnostic'):
+            runner.load_checkpoint(path, fresh, fresh_optimizer, cfg, evaluation=evaluation)
+        assert_state_equal(fresh.state_dict(), before)
+        assert fresh_optimizer.state == {}
+        assert torch.equal(torch.get_rng_state(), rng_before)
+
+    task = Task('fixture', (Pair(((1,),), ((2,),)), Pair(((3,),), ((4,),))), (((5,),),))
+    data = ArcDataset((task,), {task.task_id: (((6,),),)}, {'fixture': 'test'})
+    monkeypatch.setattr(runner, 'dataset_for', lambda config, split: data)
+    with pytest.raises(ValueError, match='diagnostic'):
+        runner.train(cfg, tmp_path / 'rejected-training', resume=path)
+    with pytest.raises(ValueError, match='diagnostic'):
+        runner.evaluate(cfg, tmp_path / 'rejected-evaluation', checkpoint=path)
+    assert not (tmp_path / 'rejected-training' / 'training.jsonl').exists()
+    assert not (tmp_path / 'rejected-evaluation' / 'attempts.jsonl').exists()
+
+    progress = runner.load_checkpoint(path, fresh, fresh_optimizer, cfg, allow_diagnostic=True)
+    assert progress == {'next_episode': 1, 'outer_updates': 0}
+    assert_state_equal(fresh.state_dict(), diagnostic.state_dict())
+    assert_state_equal(fresh_optimizer.state_dict(), diagnostic_optimizer.state_dict())
+
+
+def test_checkpoint_purpose_is_required_and_unknown_purpose_is_rejected(tmp_path):
+    cfg = small_config()
+    model, optimizer, _ = policy_state(cfg)
+    path = tmp_path / 'legacy.pt'
+    runner.save_checkpoint(path, model, optimizer, cfg, 0)
+    state = torch.load(path, map_location='cpu', weights_only=True)
+    assert state['purpose'] == 'training'
+    del state['purpose']
+    torch.save(state, path)
+    with pytest.raises(ValueError, match='purpose'):
+        runner.load_checkpoint(path, model, optimizer, cfg, allow_diagnostic=True)
+    with pytest.raises(ValueError, match='purpose'):
+        runner.save_checkpoint(tmp_path / 'unknown.pt', model, optimizer, cfg, 0, purpose='unknown')

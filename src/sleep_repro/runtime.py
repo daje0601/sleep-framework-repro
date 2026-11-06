@@ -18,6 +18,13 @@ class ExperimentConfig:
     device: str = "cuda"
     dtype: str = "float32"
     attention_backend: str = "sdpa"
+    prompt_format: str = "plain-v1"
+    sft_update_mode: str = "full-dataset-v1"
+    effective_batch_size: int = 2
+    outer_effective_batch_size: int = 5
+    sft_max_steps: int = 375
+    contextual_examples: bool = False
+    lora_targets: tuple[str, ...] = ("q_proj", "v_proj")
     levels: int = 2
     periods: tuple[int, ...] = (1, 4)
     rank: int = 64
@@ -54,6 +61,8 @@ class ExperimentConfig:
         values = dict(values)
         if "periods" in values:
             values["periods"] = tuple(values["periods"])
+        if "lora_targets" in values:
+            values["lora_targets"] = tuple(values["lora_targets"])
         obj = cls(**values)
         if obj.mode not in ("sleep", "icl", "ttt", "self_edit", "consolidation"):
             raise ValueError("Unknown mode")
@@ -72,6 +81,9 @@ class ExperimentConfig:
             "max_length",
             "max_new_tokens",
             "microbatch_size",
+            "effective_batch_size",
+            "outer_effective_batch_size",
+            "sft_max_steps",
         )
         for name in integers:
             v = getattr(obj, name)
@@ -119,6 +131,19 @@ class ExperimentConfig:
             )
         if obj.attention_backend not in ("eager", "sdpa"):
             raise ValueError("attention_backend must be eager or sdpa")
+        if obj.prompt_format not in ("plain-v1", "hf-chat-v1"):
+            raise ValueError("Unknown prompt_format")
+        if obj.sft_update_mode not in ("full-dataset-v1", "minibatch-v2"):
+            raise ValueError("Unknown sft_update_mode")
+        if type(obj.contextual_examples) is not bool:
+            raise ValueError("contextual_examples must be boolean")
+        allowed_targets = {"q_proj", "v_proj", "gate_proj", "down_proj", "up_proj"}
+        if (
+            not obj.lora_targets
+            or len(set(obj.lora_targets)) != len(obj.lora_targets)
+            or not set(obj.lora_targets) <= allowed_targets
+        ):
+            raise ValueError("Invalid lora_targets")
         if obj.mode in ("sleep", "consolidation") and obj.dtype != "float32":
             raise ValueError(
                 "Memory base updates require float32 dtype until master-weight support is validated"
@@ -145,6 +170,8 @@ class LoRALinear(nn.Module):
     def __init__(self, base, policy_rank, inner_rank, policy_alpha, inner_alpha):
         super().__init__()
         self.base = base
+        self.in_features = base.in_features
+        self.out_features = base.out_features
         kw = {"device": base.weight.device, "dtype": base.weight.dtype}
         self.policy_a = nn.Parameter(
             torch.randn(policy_rank, base.in_features, **kw)
@@ -176,9 +203,11 @@ class LoRALinear(nn.Module):
 
 
 def attach_lora(model, cfg):
+    """Attach exactly the configured projection targets before CMS if FFNs are selected."""
+    targets = getattr(cfg, "lora_targets", ("q_proj", "v_proj"))
     for module in list(model.modules()):
         for name, child in list(module.named_children()):
-            if name in ("q_proj", "v_proj") and isinstance(child, nn.Linear):
+            if name in targets and isinstance(child, nn.Linear):
                 setattr(
                     module,
                     name,
@@ -218,12 +247,36 @@ class ByteTokenizer:
         )
 
 
-def encode_batch(tokenizer, examples, device, max_length):
+def encode_prompt(tokenizer, prompt, prompt_format="plain-v1", *, assistant_prefix=""):
+    """Versioned prompt serialization shared by generation and supervised loss."""
+    if prompt_format == "plain-v1":
+        return tokenizer.encode(prompt + assistant_prefix, add_special_tokens=True)
+    if prompt_format != "hf-chat-v1":
+        raise ValueError("Unknown prompt_format")
+    if not getattr(tokenizer, "chat_template", None):
+        raise ValueError("hf-chat-v1 requires a tokenizer chat template")
+    ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": prompt}],
+        tokenize=True,
+        return_dict=False,
+        add_generation_prompt=True,
+        date_string="26 Jul 2024",
+    )
+    return list(ids) + tokenizer.encode(assistant_prefix, add_special_tokens=False)
+
+
+def encode_batch(tokenizer, examples, device, max_length, *, prompt_format="plain-v1"):
     """Tokenize prompt and completion separately to make the loss boundary exact."""
     rows = []
     targets = []
-    for prompt, completion in examples:
-        prefix = tokenizer.encode(prompt, add_special_tokens=True)
+    for example in examples:
+        if len(example) not in (2, 3):
+            raise ValueError("Expected (prompt,completion[,assistant_prefix])")
+        prompt, completion = example[:2]
+        assistant_prefix = example[2] if len(example) == 3 else ""
+        prefix = encode_prompt(
+            tokenizer, prompt, prompt_format, assistant_prefix=assistant_prefix
+        )
         suffix = tokenizer.encode(completion, add_special_tokens=False) + [
             tokenizer.eos_token_id
         ]

@@ -21,6 +21,9 @@ from .arc import (
     expand_directive,
     holdout_demonstration,
     format_supervised_example,
+    format_prompt,
+    canonical_json,
+    Task,
     content_hash,
     load_arc,
     TRAIN_IDS,
@@ -90,11 +93,21 @@ def build_model(cfg):
     )
     with torch.no_grad():
         original_logits = model(input_ids=probe_ids, use_cache=False).logits
-    if cfg.mode in ("sleep", "consolidation"):
+    memory_enabled = cfg.mode in ("sleep", "consolidation")
+    ffn_targets = {"gate_proj", "down_proj", "up_proj"}
+    attach_before_memory = memory_enabled and bool(
+        ffn_targets.intersection(getattr(cfg, "lora_targets", ("q_proj", "v_proj")))
+    )
+    # CMS allocates one accumulation buffer per base parameter. FFN LoRA must
+    # be present before that enumeration; q/v-only keeps the legacy RNG order.
+    if attach_before_memory:
+        attach_lora(model, cfg)
+    if memory_enabled:
         wrap_llama_mlps(
             model, periods=cfg.periods, rank=cfg.rank, capacity=cfg.capacity
         )
-    attach_lora(model, cfg)
+    if not attach_before_memory:
+        attach_lora(model, cfg)
     model.eval()
     with torch.no_grad():
         converted_logits = model(input_ids=probe_ids, use_cache=False).logits
@@ -132,10 +145,19 @@ def protocol_fingerprint():
     )
 
 
-def save_checkpoint(path, model, optimizer, cfg, next_episode, *, outer_updates=0):
-    """Trusted local tensor/state checkpoint, resumable at episode boundaries."""
+def save_checkpoint(
+    path, model, optimizer, cfg, next_episode, *, outer_updates=0, purpose="training"
+):
+    """Save an episode checkpoint or an explicitly non-training diagnostic.
+
+    Checkpoint purpose is required on load. Legacy files without this field
+    must be regenerated; diagnostic policy updates cannot enter real runs.
+    """
+    if purpose not in ("training", "diagnostic"):
+        raise ValueError("Checkpoint purpose must be training or diagnostic")
     state = {
         "model": model.state_dict(),
+        "purpose": purpose,
         "optimizer": optimizer.state_dict(),
         "config": cfg.to_dict(),
         "protocol_fingerprint": protocol_fingerprint(),
@@ -157,8 +179,22 @@ def save_checkpoint(path, model, optimizer, cfg, next_episode, *, outer_updates=
     temporary.replace(path)
 
 
-def load_checkpoint(path, model, optimizer, cfg, *, evaluation=False):
+def load_checkpoint(
+    path, model, optimizer, cfg, *, evaluation=False, allow_diagnostic=False
+):
+    """Load real training state; allow fixtures only for diagnostic roundtrips.
+
+    A missing/unknown purpose is incompatible even when the source fingerprint
+    matches. Normal train/evaluate paths never opt into diagnostic loading.
+    """
     state = torch.load(path, map_location="cpu", weights_only=True)
+    purpose = state.get("purpose")
+    if purpose not in ("training", "diagnostic"):
+        raise ValueError(
+            "Checkpoint lacks a valid purpose; regenerate legacy checkpoints"
+        )
+    if purpose == "diagnostic" and not allow_diagnostic:
+        raise ValueError("Refusing diagnostic checkpoint for training or evaluation")
     if state.get("protocol_fingerprint") != protocol_fingerprint():
         raise ValueError(
             "Checkpoint protocol mismatch: data registry or implementation changed"
@@ -189,11 +225,30 @@ def load_checkpoint(path, model, optimizer, cfg, *, evaluation=False):
     }
 
 
-def examples_for(task, directive=None):
+def examples_for(task, directive=None, *, cfg=None):
     pairs = (
         task.demonstrations if directive is None else expand_directive(task, directive)
     )
-    return [format_supervised_example(p) for p in pairs]
+    if cfg is None or not cfg.contextual_examples:
+        return [format_supervised_example(p) for p in pairs]
+    # expand_directive groups pairs by transformation. Keep each demonstration
+    # context in that same coordinate/color system and withhold its query output.
+    width = len(task.demonstrations)
+    if not width:
+        raise ValueError("contextual examples require visible demonstrations")
+    examples = []
+    for start in range(0, len(pairs), width):
+        group = pairs[start : start + width]
+        for index, query in enumerate(group):
+            context = group[:index] + group[index + 1 :]
+            if not context:
+                # A two-demo training task has one visible pair after reward
+                # holdout. Use that pair alone; never restore the reward target.
+                examples.append(format_supervised_example(query))
+                continue
+            prompt = format_prompt(Task(task.task_id, context, (query.input,)))
+            examples.append((prompt, canonical_json(query.output)))
+    return examples
 
 
 def wake_episode(policy, tokenizer, cfg, task):
@@ -204,13 +259,17 @@ def wake_episode(policy, tokenizer, cfg, task):
     if cfg.mode not in ("sleep", "consolidation"):
         return episode, events
     engine = CausalEngine(episode, tokenizer, cfg, torch.device(cfg.device))
-    examples = examples_for(task)
+    examples = examples_for(task, cfg=cfg)
     for step in range(cfg.wake_steps):
         configure_wake_training(episode)
         episode.zero_grad(set_to_none=True)
         sample = [examples[step % len(examples)]]
         batch = encode_batch(
-            tokenizer, sample, torch.device(cfg.device), cfg.max_length
+            tokenizer,
+            sample,
+            torch.device(cfg.device),
+            cfg.max_length,
+            prompt_format=cfg.prompt_format,
         )
         loss = episode(**batch).loss
         if not torch.isfinite(loss):
@@ -351,7 +410,7 @@ def train(cfg, output, resume=None):
             except (ValueError, TypeError) as exc:
                 rejected.append({"index": dream_index, "text": text, "error": str(exc)})
                 continue
-            score = engine.importance(examples_for(support, directive))
+            score = engine.importance(examples_for(support, directive, cfg=cfg))
             valid.append(directive)
             scores.append(score)
         n = len(valid)
@@ -368,7 +427,7 @@ def train(cfg, output, resume=None):
 
         def adapt(model, opt, directive):
             return CausalEngine(model, tokenizer, cfg, torch.device(cfg.device)).sft(
-                examples_for(support, directive),
+                examples_for(support, directive, cfg=cfg),
                 adapter="inner",
                 epochs=directive.epochs,
                 lr=cfg.inner_lr * directive.lr_scale,
@@ -414,11 +473,15 @@ def train(cfg, output, resume=None):
                 content_hash([asdict(p) for p in expand_directive(support, d)])
                 for d in valid
             ],
+            "sft_example_hashes": [
+                content_hash(examples_for(support, d, cfg=cfg)) for d in valid
+            ],
             "gradient_scores": scores,
             "selected_indices": selected,
             "accepted": [d.to_json() for d in accepted],
             "candidate_records": [asdict(r) for r in result.records] if result else [],
             "outer_losses": outer_losses,
+            "episode_outer_optimizer_steps": len(outer_losses),
             "accepted_count": len(accepted),
             "outer_updates": outer_updates,
         }
@@ -492,9 +555,10 @@ def evaluate(cfg, output, checkpoint=None, allow_untrained=False):
                     directive = parse_directive(raw)
                 except (ValueError, TypeError) as exc:
                     invalid = str(exc)
+            inner_losses = []
             if directive:
-                engine.sft(
-                    examples_for(task, directive),
+                inner_losses = engine.sft(
+                    examples_for(task, directive, cfg=cfg),
                     adapter="inner",
                     epochs=directive.epochs,
                     lr=cfg.inner_lr * directive.lr_scale,
@@ -515,6 +579,13 @@ def evaluate(cfg, output, checkpoint=None, allow_untrained=False):
                     "directive": raw,
                     "invalid_directive": invalid,
                     "wake": events,
+                    "inner_optimizer_steps": len(inner_losses),
+                    "inner_losses": inner_losses,
+                    "sft_example_hash": content_hash(
+                        examples_for(task, directive, cfg=cfg)
+                    )
+                    if directive
+                    else None,
                     "expanded_example_hash": content_hash(
                         [asdict(p) for p in expand_directive(task, directive)]
                     )

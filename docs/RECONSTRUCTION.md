@@ -7,6 +7,12 @@ attempt metric. The implementation is a bounded post-training reconstruction;
 it does not recreate the authors' architectural pretraining or establish their
 exact unpublished recipe.
 
+This registry describes the legacy default unless qualified. The explicitly
+opt-in [v2 protocol](PROTOCOL_V2.md) adds chat serialization, contextual examples,
+minibatch optimizer updates, and FFN adapter targets. Existing legacy configs
+are preserved for interpreting earlier attempts. Neither variant has a
+successful pretrained benchmark measurement.
+
 Sources: [Sleep v2](https://arxiv.org/html/2606.03979v2), particularly Sections
 2.2–3.4, Table 4, and Appendix B.3;
 [Nested Learning](https://arxiv.org/abs/2512.24695);
