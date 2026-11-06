@@ -49,9 +49,20 @@ python scripts/vessl_launch.py --config configs/vessl.local.json --submit
 
 The launcher never authenticates, creates resources, submits by default, or
 loops over seeds. With `--submit`, it stays attached and polls the created job
-every 15 seconds until a terminal state. Its local deadline starts before
-submission and includes queue and image-pull time: `timeout_seconds + 60`
-seconds. A deadline, Ctrl-C, SIGTERM, or monitoring exception triggers termination of
+every 15 seconds until a terminal state. Set an explicit
+`"queue_timeout_seconds": 1800` to allow up to 30 minutes for allocation and
+image pull, followed by the separate `timeout_seconds` runtime budget. The
+runtime deadline starts at the first observed `running` state and includes
+60 seconds of monitoring grace. It never resets if a later status returns to
+scheduling. An absolute cap of `queue_timeout_seconds + timeout_seconds + 60`
+seconds starts before submission. For example, two 1800-second budgets allow
+at most 3660 seconds before termination is requested; the container itself
+still stops after its 1800-second runtime guard. Without the optional queue
+field, existing configs retain the legacy combined `timeout_seconds + 60`
+deadline. Use the explicit separate field for capacity-constrained GPU jobs
+so late allocation does not consume the execution budget.
+
+A deadline, Ctrl-C, SIGTERM, or monitoring exception triggers termination of
 that newly created job only, followed by a terminal-state check. A second
 bounded cleanup window allows the provider to finish termination. Choose a
 fresh unique `job_name`; existing names are rejected so cleanup cannot target

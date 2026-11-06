@@ -389,3 +389,60 @@ def test_interrupt_during_create_recovers_unique_new_job_for_cleanup():
             sleep=clock.sleep,
         )
     assert cloud.created and cloud.terminated
+
+
+def test_late_allocation_gets_full_separate_runtime_window():
+    module = launcher()
+    clock = FakeTime()
+    # Allocation at t=90 exceeds the old combined runtime deadline of t=70.
+    cloud = FakeCloud(["scheduling"] * 6 + ["running"] * 4 + ["succeeded"])
+    cfg = config()
+    cfg.update(timeout_seconds=10, queue_timeout_seconds=100)
+    command = module.build_command(cfg, EXPERIMENT)
+    result = module.submit_and_monitor(
+        cfg, command, run=cloud, now=clock.now, sleep=clock.sleep
+    )
+    assert result["state"] == "succeeded" and clock.value == 150
+    assert not cloud.terminated
+
+
+def test_never_allocated_job_expires_its_separate_queue_budget():
+    module = launcher()
+    clock = FakeTime()
+    cloud = FakeCloud(["scheduling"])
+    cfg = config()
+    cfg.update(timeout_seconds=1000, queue_timeout_seconds=20)
+    with pytest.raises(TimeoutError, match="queue"):
+        module.submit_and_monitor(
+            cfg,
+            module.build_command(cfg, EXPERIMENT),
+            run=cloud,
+            now=clock.now,
+            sleep=clock.sleep,
+        )
+    assert cloud.terminated and clock.value == 20
+
+
+def test_state_flapping_never_renews_runtime_budget():
+    module = launcher()
+    clock = FakeTime()
+    cloud = FakeCloud(["running", "scheduling", "running", "scheduling", "running"])
+    cfg = config()
+    cfg.update(timeout_seconds=10, queue_timeout_seconds=100)
+    with pytest.raises(TimeoutError, match="runtime"):
+        module.submit_and_monitor(
+            cfg,
+            module.build_command(cfg, EXPERIMENT),
+            run=cloud,
+            now=clock.now,
+            sleep=clock.sleep,
+        )
+    assert cloud.terminated and clock.value == 70
+
+
+@pytest.mark.parametrize("value", [0, -1, 86401, True, 1.5])
+def test_invalid_separate_queue_budget_is_rejected(value):
+    cfg = config()
+    cfg["queue_timeout_seconds"] = value
+    with pytest.raises(ValueError, match="queue_timeout_seconds"):
+        launcher().build_command(cfg, EXPERIMENT)

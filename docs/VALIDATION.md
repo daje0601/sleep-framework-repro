@@ -10,7 +10,9 @@ This records implementation evidence, not a numerical ARC reproduction.
   for source commit `4894ea4`.
 - Current suite after diagnostic-checkpoint isolation, configurable FFN LoRA,
   chat/contextual minibatch variants and pinned upstream preparation: **181
-  passed, 2 CUDA-only tests skipped**. This is local CPU evidence.
+  passed, 2 CUDA-only tests skipped**. The [hosted CPU workflow also passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42310565556)
+  for source commit `dfb9182`, including smoke, packaging, and artifact upload.
+  This is CPU evidence, not a pretrained GPU run.
 - The actual pinned Llama tokenizer passed chat-prefix/BOS/masking checks.
   A token-length audit of all 19 fixed source tasks, using training holdouts
   and four rotations, found maximum SFT length 4,173 and maximum grid/directive

@@ -26,6 +26,16 @@ reported both resource types unavailable. Both requests were terminated and
 the account burn rate was verified as zero. No successful pretrained preflight
 result is claimed. The next GPU run requires an allocated A100/H100 80 GB.
 
+The seventh request used H100 80 GB and source `b0d4a33`. It waited about
+30 minutes before starting; dependencies installed and the pinned model weights
+loaded at 23:22:21 UTC on 2026-11-06. The attached launcher's combined queue and
+runtime deadline then terminated it before the preflight completed. This was a
+launcher-budget problem, not a measured model OOM or accuracy failure. Termination
+and a subsequently zero account burn rate were verified. An initial billing
+read still showed the old rate, so a follow-up verification was required.
+Subsequent launches can explicitly separate queue and runtime budgets while
+retaining finite absolute and container deadlines.
+
 | Component / experiment | Implementation and available evidence | Execution / reproduction status |
 | --- | --- | --- |
 | ARC data provenance | Public SEAL files retrieved at the pinned commit; actual SHA256 values committed; explicit 11/8 source-task split and all retained test subtasks recorded | Data preparation and cached verification executed; this is not model evidence |

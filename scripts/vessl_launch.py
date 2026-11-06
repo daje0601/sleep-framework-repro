@@ -46,6 +46,7 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
         "repository",
         "source_commit",
         "timeout_seconds",
+        "queue_timeout_seconds",
         "stage",
         "torch_version",
         "linux_dependencies",
@@ -90,6 +91,10 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
     seconds = cfg.get("timeout_seconds")
     if type(seconds) is not int or not 1 <= seconds <= 86400:
         raise ValueError("timeout_seconds must be an integer in 1..86400")
+    if "queue_timeout_seconds" in cfg:
+        queue_seconds = cfg["queue_timeout_seconds"]
+        if type(queue_seconds) is not int or not 1 <= queue_seconds <= 86400:
+            raise ValueError("queue_timeout_seconds must be an integer in 1..86400")
     mount = cfg.get("mount_path", "")
     if (
         not isinstance(mount, str)
@@ -267,7 +272,9 @@ SUCCESS_STATES = {"succeeded", "completed", "finished"}
 def submit_and_monitor(cfg, command, *, run=None, now=None, sleep=None):
     """Own one created job until terminal; clean it up on deadline or interruption.
 
-    The local deadline includes queue and image-pull time. The independent
+    An explicit queue_timeout_seconds separates allocation from runtime. Its
+    absence preserves the legacy combined deadline. Runtime starts once at the
+    first observed running state; flapping never extends it. The independent
     container timeout remains a second guard. Only the newly created job is
     eligible for termination; pre-existing jobs and workspaces are untouched.
     """
@@ -275,11 +282,29 @@ def submit_and_monitor(cfg, command, *, run=None, now=None, sleep=None):
     now = time.monotonic if now is None else now
     sleep = time.sleep if sleep is None else sleep
     base = [command[0], "--org", cfg["org"], "--team", cfg["team"]]
-    deadline = now() + cfg["timeout_seconds"] + 60
+    submitted_at = now()
+    queue_seconds = cfg.get("queue_timeout_seconds")
+    separate_budgets = queue_seconds is not None
+    absolute_deadline = (
+        submitted_at + cfg["timeout_seconds"] + 60 + (queue_seconds or 0)
+    )
+    queue_deadline = (
+        submitted_at + queue_seconds if separate_budgets else absolute_deadline
+    )
+    runtime_deadline = None
+    first_running_at = None
     job_id = None
     state = None
     attempted = False
     cleanup_requested = False
+
+    def current_deadline():
+        nonlocal runtime_deadline, first_running_at
+        if separate_budgets and state == "running" and runtime_deadline is None:
+            first_running_at = now()
+            runtime_deadline = first_running_at + cfg["timeout_seconds"] + 60
+        selected = runtime_deadline if runtime_deadline is not None else queue_deadline
+        return min(absolute_deadline, selected)
 
     def invoke(arguments):
         result = run(
@@ -348,7 +373,7 @@ def submit_and_monitor(cfg, command, *, run=None, now=None, sleep=None):
     if named_jobs():
         raise ValueError("job_name already exists; choose a fresh unique job name")
     try:
-        if now() >= deadline:
+        if now() >= queue_deadline:
             raise TimeoutError("Submission deadline expired before job creation")
         attempted = True
         response = run(
@@ -381,8 +406,11 @@ def submit_and_monitor(cfg, command, *, run=None, now=None, sleep=None):
                 f"Job creation returned exit {response.returncode}; cleaning up {job_id}"
             )
         while state not in TERMINAL_STATES:
+            deadline = current_deadline()
             if now() >= deadline:
-                raise TimeoutError(f"Job {job_id} exceeded queue plus runtime deadline")
+                phase = "runtime" if runtime_deadline is not None else "queue"
+                label = phase if separate_budgets else "queue plus runtime"
+                raise TimeoutError(f"Job {job_id} exceeded {label} deadline")
             sleep(min(15, deadline - now()))
             updated = job_state(job_id)
             if updated != state:
@@ -415,6 +443,10 @@ def submit_and_monitor(cfg, command, *, run=None, now=None, sleep=None):
                 "billing_burn_rate_per_hour": burn_rate,
                 "billing_read_error": billing_error,
                 "success": state in SUCCESS_STATES,
+                "separate_queue_runtime_budgets": separate_budgets,
+                "first_running_elapsed_seconds": first_running_at - submitted_at
+                if first_running_at is not None
+                else None,
             }
             print(json.dumps(summary), flush=True)
     return summary
