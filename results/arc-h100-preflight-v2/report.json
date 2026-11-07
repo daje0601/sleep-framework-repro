@@ -1,0 +1,193 @@
+{
+  "config": {
+    "model": "meta-llama/Llama-3.2-1B-Instruct",
+    "revision": "9213176726f574b556790deb65791e0c5aa438b6",
+    "mode": "sleep",
+    "seed": 42,
+    "device": "cuda",
+    "dtype": "float32",
+    "attention_backend": "sdpa",
+    "prompt_format": "hf-chat-v1",
+    "sft_update_mode": "minibatch-v2",
+    "effective_batch_size": 2,
+    "outer_effective_batch_size": 5,
+    "sft_max_steps": 375,
+    "contextual_examples": true,
+    "lora_targets": [
+      "q_proj",
+      "v_proj",
+      "gate_proj",
+      "down_proj",
+      "up_proj"
+    ],
+    "levels": 2,
+    "periods": [
+      1,
+      4
+    ],
+    "rank": 64,
+    "capacity": 8,
+    "wake_steps": 4,
+    "consolidation_steps": 2,
+    "base_lr": 5e-06,
+    "expert_lr": 5e-05,
+    "policy_rank": 16,
+    "inner_rank": 128,
+    "lora_alpha": 16,
+    "inner_lr": 0.0001,
+    "outer_lr": 5e-05,
+    "outer_epochs": 8,
+    "train_epochs": 1,
+    "microbatch_size": 1,
+    "train_dreams": 60,
+    "top_k": 12,
+    "random_k": 3,
+    "attempts": 5,
+    "max_length": 16384,
+    "max_new_tokens": 2048,
+    "temperature": 0.8,
+    "ks_alpha": 0.5,
+    "semantic_weight": 0.5,
+    "on_policy_fraction": 0.5,
+    "data_dir": "data/arc"
+  },
+  "source_commit": "cead89d728a2713d1dc93312b71a5cc6ccef3e56",
+  "model_revision": null,
+  "protocol_fingerprint": "2e4f6e2091a6f66316f5e983c7ae48ce4015c308126d519813aad077102b9302",
+  "conversion_probe": {
+    "passed": true,
+    "max_absolute_logit_difference": 0.0,
+    "token_count": 4,
+    "scope": "short fixed input; initial conversion only"
+  },
+  "dependencies": {
+    "torch": "2.15.0+cu132",
+    "transformers": "5.22.1",
+    "numpy": "2.5.4"
+  },
+  "device": "cuda",
+  "parameter_counts": {
+    "total": 1393231872,
+    "active": 1326123008,
+    "trainable": 9568256
+  },
+  "hardware": "NVIDIA H100 80GB HBM3",
+  "container_image": "pytorch/pytorch@sha256:924707fa828f821c9a82d987b405675df6369eee5ce368aece6757b025ffcde5",
+  "data_hashes": {
+    "challenges_sha256": "e130bc1ee1cdcbf9ae7b802cf92c5e82fe0899227f9376630fdb1e8271ddacfd",
+    "solutions_sha256": "7ebeeb1ec8fe36d7ff90fbec9fe11d0eb93f02473158b8da5141fb9c44f6288f"
+  },
+  "protocol": "independent reconstructed ARC protocol; not exact author recipe",
+  "paper_result_reproduced": false,
+  "kind": "one_training_task_execution_preflight",
+  "passed": true,
+  "gpu_validation": true,
+  "task_id": "44f52bb0",
+  "support_demonstration_count": 5,
+  "heldout_source": "visible demonstration of a training task",
+  "wake_events": [
+    {
+      "event": "wake",
+      "step": 0,
+      "loss": 5.359457969665527
+    },
+    {
+      "event": "consolidation",
+      "step": 0,
+      "level": 0,
+      "losses": [
+        47.624717712402344,
+        43.45291519165039
+      ]
+    },
+    {
+      "event": "wake",
+      "step": 1,
+      "loss": 4.027449131011963
+    },
+    {
+      "event": "consolidation",
+      "step": 1,
+      "level": 0,
+      "losses": [
+        16.56929588317871,
+        26.23270606994629
+      ]
+    },
+    {
+      "event": "wake",
+      "step": 2,
+      "loss": 2.2173590660095215
+    },
+    {
+      "event": "consolidation",
+      "step": 2,
+      "level": 0,
+      "losses": [
+        22.905900955200195,
+        45.02693176269531
+      ]
+    },
+    {
+      "event": "wake",
+      "step": 3,
+      "loss": 1.1349053382873535
+    },
+    {
+      "event": "consolidation",
+      "step": 3,
+      "level": 0,
+      "losses": [
+        21.152538299560547,
+        24.087444305419922
+      ]
+    }
+  ],
+  "memory_base_delta_l1": 102.9051055752653,
+  "generated_directive": "[[1]]\n\n{\"rotations\":[0],\"reflect\":false,\"color_permutation\":null,\"epochs\":1,\"lr_scale\":1.0}",
+  "generated_directive_valid": false,
+  "generated_directive_error": "invalid JSON",
+  "generated_directive_hash": "d0006f8c6f641974a44552492c15138dcae97ed24c219b415ef6c1f80f8ddc54",
+  "fixture_update": {
+    "directive": "{\"color_permutation\":null,\"epochs\":1,\"lr_scale\":1.0,\"reflect\":false,\"rotations\":[0]}",
+    "forced": true,
+    "accepted_policy_update": false,
+    "candidate_count": 1,
+    "purpose": "disposable optimizer/adapter correctness fixture",
+    "expanded_example_hash": "5f7dedf9825b6a126f6628a32f4f2728ed93b876866e3a8564e17106b2440373"
+  },
+  "inner_losses": [
+    0.8749637007713318,
+    0.30176520347595215,
+    0.5746228694915771
+  ],
+  "outer_losses": [
+    1.1788395643234253,
+    0.8048115372657776,
+    0.47258785367012024,
+    0.28579068183898926,
+    0.17709927260875702,
+    0.11068832129240036,
+    0.07171095907688141,
+    0.050638347864151
+  ],
+  "inner_parameter_delta_l1": 11742.564110206751,
+  "outer_parameter_delta_l1": 2470.944261399774,
+  "heldout_training_validation_score": 0.0,
+  "checkpoint_resume_verified": true,
+  "peak_cuda_allocated_bytes": 35368727552,
+  "peak_cuda_reserved_bytes": 41651535872,
+  "elapsed_seconds": 667.7388981990516,
+  "scope": "one training task; full configured wake; one generated directive; forced inner/outer fixture; no final evaluation",
+  "provider_report_sha256": "4e4bcd8d69048ab3cc7d6d894da0d55234abf92db172eca36f70ccf53fa6f351",
+  "exit_code": 0,
+  "public_report_omissions": [
+    "provider job identifier",
+    "private diagnostic checkpoint path"
+  ],
+  "experiment_config_sha256": "970584c2ecc717d91dd22dcbd01c42ca8532dd6fa5ad6b5feb0de98e6a023514",
+  "metadata_from_matching_gate": [
+    "container_image",
+    "experiment_config_sha256"
+  ]
+}

@@ -8,11 +8,14 @@ This records implementation evidence, not a numerical ARC reproduction.
   selection, and checkpoint-stop preservation: **158 passed, 2 CUDA-only
   tests skipped**. [Current hosted CI passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42249791037)
   for source commit `4894ea4`.
-- Current suite after diagnostic-checkpoint isolation, configurable FFN LoRA,
+- Earlier suite after diagnostic-checkpoint isolation, configurable FFN LoRA,
   chat/contextual minibatch variants and pinned upstream preparation: **181
   passed, 2 CUDA-only tests skipped**. The [hosted CPU workflow also passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42310565556)
   for source commit `dfb9182`, including smoke, packaging, and artifact upload.
   This is CPU evidence, not a pretrained GPU run.
+- After separate queue/runtime deadlines: **189 passed, 2 CUDA-only skipped**;
+  [hosted CPU workflow passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42311751440)
+  at `cead89d`.
 - The actual pinned Llama tokenizer passed chat-prefix/BOS/masking checks.
   A token-length audit of all 19 fixed source tasks, using training holdouts
   and four rotations, found maximum SFT length 4,173 and maximum grid/directive
@@ -40,9 +43,9 @@ learning, rollback, isolated candidate lifetimes, token-weighted microbatch
 updates, and exact checkpoint continuation through real optimizer steps.
 Checkpoints with zero accepted outer updates remain explicitly untrained.
 
-The fixed pretrained model revision is accessible after authentication and
-loaded in CUDA attempts. Failures and corrections are recorded in
-[experiment status](EXPERIMENT_STATUS.md). Subsequent A100/H100 requests did not
-obtain allocation and were terminated; final account burn was zero. Successful
-80 GB preflight and benchmark measurements remain pending. CPU success does not
-establish GPU memory fit, semantic-judge quality, or the paper's reported accuracy.
+The [H100 80 GB preflight](../results/arc-h100-preflight-v2/README.md) passed
+using the pinned pretrained revision and v2 protocol on one training task.
+Its forced updates and checkpoint roundtrip verify execution; the invalid
+generated directive and zero held-out training score do not establish ARC
+accuracy. Other failures and corrections are recorded in
+[experiment status](EXPERIMENT_STATUS.md).

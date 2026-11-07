@@ -1,7 +1,7 @@
 # Experiment status
 
-Updated 2026-11-07. This is an unofficial independent reconstruction. There are
-**no successful pretrained GPU preflight and no quantitative reproduction results**.
+Updated 2026-11-07. This is an unofficial independent reconstruction. A [pretrained H100 preflight](../results/arc-h100-preflight-v2/README.md) passed. There are
+**no quantitative paper reproduction results**.
 Published paper percentages are not measurements from this repository.
 
 The first L40S preflight loaded the pinned model, then failed during
@@ -23,8 +23,7 @@ The fourth L40S attempt was explicitly terminated to move validation to an
 A100/H100 with 80 GB. Both an A100 request and a subsequent H100 request
 remained in scheduling without application execution; the account catalogue
 reported both resource types unavailable. Both requests were terminated and
-the account burn rate was verified as zero. No successful pretrained preflight
-result is claimed. The next GPU run requires an allocated A100/H100 80 GB.
+the account burn rate was verified as zero. Neither waiting request produced a pretrained preflight result.
 
 The seventh request used H100 80 GB and source `b0d4a33`. It waited about
 30 minutes before starting; dependencies installed and the pinned model weights
@@ -36,11 +35,21 @@ read still showed the old rate, so a follow-up verification was required.
 Subsequent launches can explicitly separate queue and runtime budgets while
 retaining finite absolute and container deadlines.
 
+The eighth H100 job was allocated but failed during dependency installation:
+`click==8.3.3` conflicted with `huggingface-hub==2.4.0`. No model ran. The ninth
+job used compatible `click==8.5.0`, passed the complete v2 preflight and exited
+0. Peak CUDA allocation/reservation were 32.94/38.79 GiB, with four wake steps,
+four consolidations and verified checkpoint/RNG restoration. The generated
+directive was invalid; training-fixture updates were forced and held-out
+training score was zero. No final evaluation occurred. The local monitor lost
+connectivity; terminal success and zero burn were independently confirmed via
+the provider after reconnection. See the [public report](../results/arc-h100-preflight-v2/report.json).
+
 | Component / experiment | Implementation and available evidence | Execution / reproduction status |
 | --- | --- | --- |
 | ARC data provenance | Public SEAL files retrieved at the pinned commit; actual SHA256 values committed; explicit 11/8 source-task split and all retained test subtasks recorded | Data preparation and cached verification executed; this is not model evidence |
-| Scheduled memory and conversion | Bounded expert banks, identity-initialized residual stages, fixed token-local routing, explicit periods | CPU correctness checks available; pretrained conversion probes not run |
-| Transactional consolidation | Private teacher/student snapshots, receiver-only fitting, finite checks, atomic commit, rollback and optimizer reset | CPU invariant checks available; pretrained GPU transfer not run |
+| Scheduled memory and conversion | Bounded expert banks, identity-initialized residual stages, fixed token-local routing, explicit periods | H100 four-token conversion probe passed with zero maximum logit difference |
+| Transactional consolidation | Private teacher/student snapshots, receiver-only fitting, finite checks, atomic commit, rollback and optimizer reset | Four H100 consolidation events completed in one training-task preflight |
 | KS/LTI | Masked forward KL, detached mixed-policy sampling, frozen teacher semantic judging, edit reward | CPU objective/engine checks available; semantic-judge quality and ARC effectiveness unmeasured |
 | Dreaming and ReST-EM | Bounded JSON dreams, gradient ranking, isolated candidate adaptation, positive-reward outer updates | CPU correctness checks available; learned pretrained directive policy not trained |
 | Synthetic integration | Tiny random Llama, synthetic grids, actual updates, checkpoint continuation | Exercised locally through CPU tests; deliberately not ARC benchmark evidence |
@@ -48,7 +57,7 @@ retaining finite absolute and container deadlines.
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
 | Pinned upstream SEAL ICL/TTT baseline | SHA256-verified source package, explicit integration patch, separate setup/run commands and metric summary | Actual preparation exercised; dependency compatibility and GPU execution not yet validated |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | GPU attempts failed with memory/cache errors; subsequent 80 GB requests awaited capacity; successful preflight and quantitative comparison pending |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 v2 preflight passed; full train/evaluation comparison pending |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 ## Evidence that must accompany a result

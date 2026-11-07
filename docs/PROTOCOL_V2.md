@@ -71,5 +71,6 @@ sleep-repro evaluate --config configs/arc_sleep_v2.json \
   --checkpoint runs/v2_train/checkpoint.pt --output runs/v2_eval
 ```
 
-These GPU commands remain unexecuted. Fit on an 80 GB GPU and measured ARC
-accuracy are not established by CPU tests or by configuration corrections.
+The [H100 preflight](../results/arc-h100-preflight-v2/README.md) has been executed
+on one training task. That run demonstrates fit for that workload only. It
+produced an invalid directive, and does not establish measured ARC accuracy.

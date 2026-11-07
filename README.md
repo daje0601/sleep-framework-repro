@@ -2,7 +2,7 @@
 
 An **unofficial, independent ARC reconstruction** of [Language Models Need Sleep](https://arxiv.org/html/2606.03979v2). This repository implements a runnable interpretation of the method and records its reconstruction choices. It is not affiliated with Google or the paper authors.
 
-**No quantitative paper result has been reproduced.** Pretrained preflights encountered memory/cache failures; a later H100 allocation arrived near the submission deadline and was terminated during startup. CPU tests and a tiny random-model smoke check exercise correctness; they are not ARC benchmark evidence. See [experiment status](docs/EXPERIMENT_STATUS.md).
+**No quantitative paper result has been reproduced.** A [pretrained H100 80 GB preflight](results/arc-h100-preflight-v2/README.md) passed on one training task: 32.94 GiB peak allocation and verified checkpoint restoration. Its generated directive was invalid; forced adapter updates are diagnostics, not learned-policy accuracy. CPU tests and a tiny random-model smoke check exercise correctness; they are not ARC benchmark evidence. See [experiment status](docs/EXPERIMENT_STATUS.md).
 
 ## What is implemented
 
@@ -10,7 +10,7 @@ The PyTorch implementation combines scheduled memory stages, transactional conso
 
 | Path | Implementation | Pretrained ARC results |
 | --- | --- | --- |
-| Reconstructed Sleep | Memory, consolidation, dreaming, inner adaptation, outer policy update | Not run |
+| Reconstructed Sleep | Memory, consolidation, dreaming, inner adaptation, outer policy update | H100 preflight passed; no final accuracy result |
 | `icl` | Visible examples and greedy grid decoding | Not run |
 | `ttt` | Inner LoRA on visible pairs with an identity augmentation directive | Not run |
 | `self_edit` | Learned JSON directives and inner LoRA, without CMS | Not run |

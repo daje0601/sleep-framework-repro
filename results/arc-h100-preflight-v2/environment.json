@@ -1,0 +1,7 @@
+{
+  "python": "3.12.3",
+  "torch": "2.15.0+cu132",
+  "cuda": "13.2",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "source_commit": "cead89d728a2713d1dc93312b71a5cc6ccef3e56"
+}
