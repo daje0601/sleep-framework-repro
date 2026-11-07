@@ -96,7 +96,9 @@ def preflight(cfg, output) -> dict:
     task = data.tasks[0]
     support, heldout = holdout_demonstration(task)
     policy, tokenizer = build_model(cfg)
+    wake_started = time.monotonic()
     episode, events = wake_episode(policy, tokenizer, cfg, support)
+    wake_seconds = time.monotonic() - wake_started
     memory_delta = None
     if cfg.mode in ("sleep", "consolidation"):
         before_bases = [
@@ -115,8 +117,10 @@ def preflight(cfg, output) -> dict:
         _check_update(memory_delta, "memory base")
         del before_bases, after_bases
     engine = CausalEngine(episode, tokenizer, cfg, device)
+    directive_started = time.monotonic()
     with dream_routing(episode, cfg.mode == "sleep"):
         raw_directive = engine.generate_directive(support)
+    directive_seconds = time.monotonic() - directive_started
     directive_error = None
     try:
         sampled = parse_directive(raw_directive)
@@ -127,17 +131,21 @@ def preflight(cfg, output) -> dict:
     fixture = DreamDirective()
     inner_parameters = train_adapter(episode, "inner")
     inner_before = _snapshot(inner_parameters)
+    adaptation_started = time.monotonic()
     inner_losses = engine.sft(
         examples_for(support, fixture, cfg=cfg),
         adapter="inner",
         epochs=fixture.epochs,
         lr=cfg.inner_lr,
     )
+    adaptation_seconds = time.monotonic() - adaptation_started
     inner_delta = _delta(inner_before, inner_parameters)
     _check_update(inner_delta, "inner")
     del inner_before
     # Scoring uses only this held-out training demonstration, never final targets.
+    prediction_started = time.monotonic()
     validation_score = engine.score_demonstration(support, heldout)
+    prediction_seconds = time.monotonic() - prediction_started
     del engine, episode, inner_parameters
 
     outer_parameters = train_adapter(policy, "policy")
@@ -217,6 +225,12 @@ def preflight(cfg, output) -> dict:
         if device.type == "cuda"
         else None,
         "elapsed_seconds": time.monotonic() - started,
+        "stage_wall_seconds": {
+            "wake_and_consolidation": wake_seconds,
+            "one_directive_generation": directive_seconds,
+            "fixture_inner_sft": adaptation_seconds,
+            "one_heldout_prediction": prediction_seconds,
+        },
         "scope": "one training task; full configured wake; one generated directive; forced inner/outer fixture; no final evaluation",
     }
     write_json(output / "preflight.json", report)

@@ -222,6 +222,10 @@ def load_checkpoint(
         observed = {k: v for k, v in observed.items() if k not in ignored}
     if expected != observed:
         raise ValueError("Checkpoint config mismatch; refuse silent protocol changes")
+    if evaluation and cfg.ks_protocol == "student-tokens-v3":
+        expected_episodes = len(TRAIN_IDS) * cfg.train_epochs
+        if type(state.get("next_episode")) is not int or state["next_episode"] != expected_episodes:
+            raise ValueError(f"v3 evaluation requires {expected_episodes} completed training episodes")
     model.load_state_dict(state["model"])
     if optimizer is not None:
         optimizer.load_state_dict(state["optimizer"])

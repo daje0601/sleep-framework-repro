@@ -2,7 +2,7 @@
 
 An **unofficial, independent ARC reconstruction** of [Language Models Need Sleep](https://arxiv.org/html/2606.03979v2). This repository implements a runnable interpretation of the method and records its reconstruction choices. It is not affiliated with Google or the paper authors.
 
-**No quantitative paper result has been reproduced.** The [seed 42 H100 training run](results/arc-h100-seed42-training-12/report.json) saved a checkpoint after one of 11 tasks with zero outer policy updates, then stopped during memory consolidation on task two. Final evaluation has not run. The earlier [H100 80 GB preflight](results/arc-h100-preflight-v2/README.md) verified the training path and checkpoint restoration using forced diagnostic updates. See the [equation and ARC protocol review (Korean)](docs/PAPER_AUDIT_KO.md) for the differences from the paper and the [experiment status](docs/EXPERIMENT_STATUS.md) for run evidence.
+**No quantitative paper result has been reproduced.** The current [v3 experiment](docs/PROTOCOL_V3.md) implements the token edit reward, student-trajectory KS loss and a demonstration-only directive prompt. Its seed 42 run starts from the pinned model. The earlier [v2 seed 42 H100 training run](results/arc-h100-seed42-training-12/report.json) saved a checkpoint after one of 11 tasks with zero outer policy updates, then stopped during memory consolidation on task two. Final evaluation has not run. The earlier [H100 80 GB preflight](results/arc-h100-preflight-v2/README.md) verified the training path and checkpoint restoration using forced diagnostic updates. See the [equation and ARC protocol review (Korean)](docs/PAPER_AUDIT_KO.md) for the differences from the paper and the [experiment status](docs/EXPERIMENT_STATUS.md) for run evidence.
 
 ## What is implemented
 
@@ -48,7 +48,7 @@ The smoke command uses a tiny randomly initialized Llama and synthetic grids, ru
 
 ```sh
 python scripts/prepare_data.py
-sleep-repro check-config --config configs/arc_sleep.json
+sleep-repro check-config --config configs/arc_sleep_v3.json
 ```
 
 Preparation verifies four public files against committed SHA256 values. The fixed reconstruction selects 11 training and eight evaluation tasks, keeping every selected task's test pair. See [ARC protocol](docs/ARC_PROTOCOL.md) for provenance, the split discrepancy, JSON schema, and target isolation.
@@ -56,13 +56,13 @@ Preparation verifies four public files against committed SHA256 values. The fixe
 The commands below are **unexecuted GPU experiment instructions**. They require CUDA, access to `meta-llama/Llama-3.2-1B-Instruct`, and an authenticated Hugging Face environment. The supplied configs pin a model revision; freeze the dependency environment before a measured run. Full-model transactional snapshots and candidate copies can consume substantial memory. An 80 GB GPU is a candidate for preflight, not a measured requirement or fit guarantee. The preflight checks one actual training task, parameter changes, conversion logits, checkpoint continuation, and peak memory. Its forced optimizer fixtures are diagnostics, not policy-training evidence. See [VESSL instructions](docs/VESSL.md) for bounded cloud jobs.
 
 ```sh
-sleep-repro preflight --config configs/arc_sleep.json --output runs/preflight
-sleep-repro train --config configs/arc_sleep.json --output runs/example_train
-sleep-repro evaluate --config configs/arc_sleep.json \
-  --checkpoint runs/example_train/checkpoint.pt --output runs/example_eval
+sleep-repro preflight --config configs/arc_sleep_v3.json --output runs/v3_seed42_preflight
+sleep-repro train --config configs/arc_sleep_v3.json --output runs/v3_seed42_train
+sleep-repro evaluate --config configs/arc_sleep_v3.json \
+  --checkpoint runs/v3_seed42_train/checkpoint.pt --output runs/v3_seed42_eval
 ```
 
-Resume training at an episode boundary with `train --resume runs/example_train/checkpoint.pt` and the same config/output. Use a fresh evaluation directory for every evaluation. `icl`, `ttt`, and `consolidation` can be evaluated directly with their corresponding `configs/arc_*.json` files; `sleep` and `self_edit` require their trained checkpoint for the primary comparison. `--allow-untrained` explicitly requests an untrained-policy ablation.
+Resume training at an episode boundary with `train --resume runs/v3_seed42_train/checkpoint.pt` and the same config/output. Use a fresh evaluation directory for every evaluation. `icl`, `ttt`, and `consolidation` can be evaluated directly with their corresponding `configs/arc_*.json` files; `sleep` and `self_edit` require their trained checkpoint for the primary comparison. `--allow-untrained` explicitly requests an untrained-policy ablation.
 
 For the declared three training seeds, generate configs and run each complete train/evaluate pair:
 
@@ -70,7 +70,7 @@ For the declared three training seeds, generate configs and run each complete tr
 python - <<'PY'
 import json
 from pathlib import Path
-base = json.loads(Path('configs/arc_sleep.json').read_text())
+base = json.loads(Path('configs/arc_sleep_v3.json').read_text())
 directory = Path('runs/configs')
 directory.mkdir(parents=True, exist_ok=True)
 for seed in (42, 43, 44):

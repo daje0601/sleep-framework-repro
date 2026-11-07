@@ -19,6 +19,18 @@ def test_config_rejects_unknown_or_false_reproduction():
         ExperimentConfig.from_dict({"revision": "main"})
 
 
+def test_student_ks_requires_its_declared_threshold_and_sampling_policy():
+    cfg = {"ks_protocol": "student-tokens-v3", "on_policy_fraction": 1}
+    for value in (None, True, -1, 1.5):
+        with pytest.raises(ValueError, match="edit_distance_threshold"):
+            ExperimentConfig.from_dict({**cfg, "edit_distance_threshold": value})
+    with pytest.raises(ValueError, match="on_policy_fraction"):
+        ExperimentConfig.from_dict({**cfg, "on_policy_fraction": 0.5, "edit_distance_threshold": 1})
+    with pytest.raises(ValueError, match="legacy"):
+        ExperimentConfig.from_dict({"edit_distance_threshold": 1})
+    assert ExperimentConfig.from_dict({**cfg, "edit_distance_threshold": 0}).edit_distance_threshold == 0
+
+
 @pytest.mark.parametrize("dtype", [torch.float32, torch.bfloat16])
 @pytest.mark.parametrize("adapter", ["inner", "policy"])
 def test_adam_first_zero_b_step_is_finite_and_updates(dtype, adapter):

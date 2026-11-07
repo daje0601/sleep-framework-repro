@@ -51,6 +51,8 @@ class ExperimentConfig:
     ks_alpha: float = 0.5
     semantic_weight: float = 0.5
     on_policy_fraction: float = 0.5
+    ks_protocol: str = "mixed-text-v2"
+    edit_distance_threshold: int | None = None
     data_dir: str = "data/arc"
 
     @classmethod
@@ -120,6 +122,13 @@ class ExperimentConfig:
                 or not 0 <= v <= 1
             ):
                 raise ValueError(f"{name} must be between 0 and 1")
+        if obj.ks_protocol == "student-tokens-v3":
+            if type(obj.edit_distance_threshold) is not int or obj.edit_distance_threshold < 0:
+                raise ValueError("v3 requires a nonnegative integer edit_distance_threshold")
+            if obj.on_policy_fraction != 1:
+                raise ValueError("v3 KS requires on_policy_fraction=1")
+        elif obj.ks_protocol != "mixed-text-v2" or obj.edit_distance_threshold is not None:
+            raise ValueError("Unknown ks_protocol or unexpected legacy edit_distance_threshold")
         if (
             any(type(k) is not int or k < 0 for k in (obj.top_k, obj.random_k))
             or not 0 < obj.top_k + obj.random_k <= obj.train_dreams
@@ -153,7 +162,11 @@ class ExperimentConfig:
         return obj
 
     def to_dict(self):
-        return asdict(self)
+        values = asdict(self)
+        if self.ks_protocol == "mixed-text-v2" and self.edit_distance_threshold is None:
+            # Preserve the serialized schema and hashes of historical checkpoints.
+            del values["ks_protocol"], values["edit_distance_threshold"]
+        return values
 
 
 def seed_all(seed):

@@ -1,6 +1,6 @@
 """Bounded causal-model operations shared by ARC experiment runners.
 
-This module performs real model forwards, masked SFT, and mixed-policy KS/LTI.
+This module performs model forwards, masked SFT, and versioned KS/LTI.
 The random teacher-prefix conditioning and YES/NO semantic prompt are explicit
 reconstruction choices; their configuration must be recorded with each run.
 """
@@ -16,8 +16,8 @@ import re
 import torch
 from torch import Tensor, nn
 
-from .arc import Grid, Pair, Task, format_prompt, parse_grid_response
-from .objectives import composite_rewards, lti_loss
+from .arc import Grid, Pair, Task, canonical_json, format_prompt, parse_grid_response
+from .objectives import composite_rewards, lti_loss, student_ks_loss, token_edit_reward
 from .runtime import encode_batch, encode_prompt, train_adapter
 
 
@@ -235,6 +235,25 @@ class CausalEngine:
 
     def directive_prompt(self, task: Task) -> str:
         """Ask for bounded augmentation JSON using only the public task view."""
+        if self.cfg.ks_protocol == "student-tokens-v3":
+            demonstrations = "\n".join(
+                f"Input {canonical_json(pair.input)} -> Output {canonical_json(pair.output)}"
+                for pair in task.demonstrations
+            )
+            return (
+                "Choose training settings for a model learning the transformation in these "
+                "ARC demonstrations. Each augmentation applies to both grids of a pair.\n"
+                f"{demonstrations}\n\n"
+                "Return one JSON object using the following keys.\n"
+                '"rotations" (required): a nonempty array of distinct integers from 0 to 3. '
+                "Each integer gives a number of clockwise quarter turns.\n"
+                '"reflect" (optional): true to flip left to right before rotation, or false.\n'
+                '"color_permutation" (optional): null or an array containing the integers '
+                "0 to 9 exactly once. Entry i is the new color for color i.\n"
+                '"epochs" (optional): an integer from 1 to 5 for the number of training passes.\n'
+                '"lr_scale" (optional): a learning rate multiplier from 0.1 to 10.\n'
+                "Write the JSON object alone."
+            )
         return (
             format_prompt(task)
             + "\nInstead of solving the query, propose one augmentation/adaptation directive. "
@@ -298,18 +317,17 @@ class CausalEngine:
     def knowledge_objective(
         self, teacher, student, examples: Sequence[tuple[str, str]]
     ) -> Tensor:
-        """KS/LTI on teacher trajectories and student random-prefix continuations.
-
-        Teacher-generated responses supply references, never hidden ARC targets.
-        Off-policy teacher and on-policy student groups are weighted by
-        ``1-on_policy_fraction`` and ``on_policy_fraction`` respectively. Each
-        student rollout conditions on a random token prefix of the teacher
-        response; that fixed prefix is masked along with the original prompt.
-        Sampling is detached, and frozen teacher YES/NO scoring supplies the
-        semantic component alongside normalized Levenshtein similarity.
-        """
+        """Distill on student continuations in v3; preserve the historical mixed loss."""
         if not examples:
             raise ValueError("knowledge objective requires examples")
+        if self.cfg.ks_protocol == "student-tokens-v3":
+            with _evaluation_mode(teacher), _evaluation_mode(student):
+                return torch.stack(
+                    [
+                        self._student_trajectory_loss(teacher, student, prompt)
+                        for prompt, _visible_completion in examples
+                    ]
+                ).mean()
         fraction = self.cfg.on_policy_fraction
         off_policy = []
         on_policy = []
@@ -377,3 +395,91 @@ class CausalEngine:
                     )
                 )
         return torch.stack(losses).sum()
+
+    @torch.no_grad()
+    def _sample_ks_tokens(
+        self, model: nn.Module, context_ids: list[int], budget: int
+    ) -> tuple[list[int], list[int]]:
+        """Sample the full temperature-scaled categorical policy with a KV cache.
+
+        Return the drawn actions and their text content. A real stop token is an
+        action for REINFORCE and KL, but is excluded from dream similarity.
+        """
+        if (
+            budget <= 0
+            or not context_ids
+            or len(context_ids) + budget > self._limit(model)
+        ):
+            raise ValueError(
+                "KS rollout exceeds its generation budget or context length"
+            )
+        stop_ids = model.generation_config.eos_token_id
+        if stop_ids is None:
+            stop_ids = self.tokenizer.eos_token_id
+        if isinstance(stop_ids, int):
+            stop_ids = (stop_ids,)
+        inputs = torch.tensor([context_ids], device=self.device, dtype=torch.long)
+        cache = None
+        sampled = []
+        for _ in range(budget):
+            output = model(
+                input_ids=inputs,
+                past_key_values=cache,
+                use_cache=True,
+                logits_to_keep=1,
+            )
+            logits = output.logits[:, -1].float() / self.cfg.temperature
+            inputs = torch.multinomial(torch.softmax(logits, dim=-1), num_samples=1)
+            token = inputs.item()
+            sampled.append(token)
+            if token in stop_ids:
+                return sampled, sampled[:-1]
+            cache = output.past_key_values
+            if cache is None:
+                raise RuntimeError("KS autoregressive sampling requires a KV cache")
+        return sampled, sampled
+
+    def _student_trajectory_loss(
+        self, teacher: nn.Module, student: nn.Module, prompt: str
+    ) -> Tensor:
+        prompt_ids = encode_prompt(self.tokenizer, prompt, self.cfg.prompt_format)
+        budget = self.cfg.max_new_tokens
+        _, reference = self._sample_ks_tokens(teacher, prompt_ids, budget)
+        prefix_length = int(torch.randint(max(len(reference), 1), ()).item())
+        prefix = reference[:prefix_length]
+        context_ids = prompt_ids + prefix
+        actions, content = self._sample_ks_tokens(
+            student, context_ids, budget - prefix_length
+        )
+        completed = prefix + content
+        edit = token_edit_reward(
+            completed, reference, threshold=self.cfg.edit_distance_threshold
+        )
+        gamma = self.cfg.semantic_weight
+        reward = (1 - gamma) * edit
+        if gamma:
+            prediction_text = self.tokenizer.decode(completed, skip_special_tokens=True)
+            reference_text = self.tokenizer.decode(reference, skip_special_tokens=True)
+            (semantic,) = self._semantic_scores(
+                teacher, [prediction_text], [reference_text]
+            )
+            reward += gamma * semantic
+
+        # Each causal shift needs the logit immediately before the first
+        # sampled action. Project just this tail of the actual token sequence.
+        inputs = torch.tensor(
+            [context_ids + actions], dtype=torch.long, device=self.device
+        )
+        labels = torch.tensor([[-100] + actions], dtype=torch.long, device=self.device)
+        kwargs = dict(input_ids=inputs, use_cache=False, logits_to_keep=labels.shape[1])
+        with torch.no_grad():
+            teacher_logits = teacher(**kwargs).logits
+        student_logits = student(**kwargs).logits
+        return student_ks_loss(
+            student_logits,
+            teacher_logits,
+            labels,
+            torch.tensor([reward], dtype=torch.float32, device=self.device),
+            alpha=self.cfg.ks_alpha,
+            temperature=self.cfg.temperature,
+        )

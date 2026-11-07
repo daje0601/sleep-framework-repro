@@ -1,8 +1,8 @@
 """Explicit causal distillation, LTI rewards, and dream-gradient statistics.
 
-Callers mix teacher-generated (off-policy) and student-generated (on-policy)
-rollouts in the batch. Sampling and semantic model freezing belong to the
-caller; neither sampling nor reward computation carries a policy gradient.
+The v3 KS loss receives student-generated continuations. Legacy protocols
+also train on teacher-generated continuations. Callers sample token IDs and
+compute frozen rewards.
 """
 
 from collections.abc import Callable, Iterable, Sequence
@@ -122,6 +122,92 @@ def lti_loss(
     if not torch.isfinite(loss):
         raise ValueError("LTI loss must be finite")
     return loss
+
+
+def student_ks_loss(
+    student_logits: Tensor,
+    teacher_logits: Tensor,
+    labels: Tensor,
+    rewards: Tensor,
+    *,
+    alpha: float,
+    temperature: float,
+) -> Tensor:
+    """Minimize the negative final KS objective from Sleep §3.3.
+
+    Rows are student rollouts. Labels contain the exact sampled actions with
+    conditioning tokens and padding masked by -100. Forward KL averages token
+    divergences within each rollout, as in GKD Eq. 2. REINFORCE uses the sum
+    of the sampled actions' log probabilities. Both expectations weight rows
+    equally. Both policies use the sampler's unrestricted temperature-scaled
+    softmax. Teacher logits, rewards, and the sampled prefixes are fixed.
+    """
+    _coefficient(alpha, "alpha")
+    if not math.isfinite(temperature) or temperature <= 0:
+        raise ValueError("temperature must be positive and finite")
+    if student_logits.shape != teacher_logits.shape:
+        raise ValueError("teacher and student logits must have identical shapes")
+    if rewards.shape != (student_logits.shape[0],) or not torch.isfinite(rewards).all():
+        raise ValueError("one finite reward is required per student rollout")
+    student, targets, valid = _causal_tokens(student_logits, labels)
+    teacher, _, _ = _causal_tokens(teacher_logits.detach(), labels)
+    lengths = valid.sum(dim=1)
+    if (lengths == 0).any():
+        raise ValueError("each student rollout must contain a sampled action")
+
+    rows = valid.nonzero(as_tuple=True)[0]
+    student_logp = F.log_softmax(student / temperature, dim=-1)
+    teacher_logp = F.log_softmax(teacher / temperature, dim=-1)
+    token_kl = F.kl_div(
+        student_logp, teacher_logp, log_target=True, reduction="none"
+    ).sum(dim=-1)
+    sample_logp = student_logp.gather(1, targets[:, None]).squeeze(1)
+    reward = rewards.detach().to(student_logp)
+    loss = (
+        alpha * token_kl / lengths[rows] - (1 - alpha) * reward[rows] * sample_logp
+    ).sum() / labels.shape[0]
+    if not torch.isfinite(loss):
+        raise ValueError("student KS loss must be finite")
+    return loss
+
+
+def token_edit_reward(
+    prediction: Sequence[int], reference: Sequence[int], *, threshold: int
+) -> float:
+    """Sleep Eq. 4 on token IDs, with an inclusive absolute distance cutoff.
+
+    Two empty content sequences match exactly. The dynamic program visits
+    only the band that can contain a path within the registered threshold.
+    """
+    if type(threshold) is not int or threshold < 0:
+        raise ValueError("edit distance threshold must be a nonnegative integer")
+    for sequence in (prediction, reference):
+        if isinstance(sequence, (str, bytes)) or any(
+            type(token) is not int or token < 0 for token in sequence
+        ):
+            raise ValueError("edit reward requires nonnegative integer token IDs")
+    longest = max(len(prediction), len(reference))
+    if not longest:
+        return 1.0
+    if abs(len(prediction) - len(reference)) > threshold:
+        return 0.0
+    outside = threshold + 1
+    previous = {j: j for j in range(min(len(reference), threshold) + 1)}
+    for i, token in enumerate(prediction, start=1):
+        current = {0: i} if i <= threshold else {}
+        first = max(1, i - threshold)
+        last = min(len(reference), i + threshold)
+        for j in range(first, last + 1):
+            current[j] = min(
+                previous.get(j, outside) + 1,
+                current.get(j - 1, outside) + 1,
+                previous.get(j - 1, outside) + (token != reference[j - 1]),
+            )
+        if min(current.values()) > threshold:
+            return 0.0
+        previous = current
+    distance = previous[len(reference)]
+    return 1.0 - distance / longest if distance <= threshold else 0.0
 
 
 def _edit_similarity(prediction: str, reference: str) -> float:

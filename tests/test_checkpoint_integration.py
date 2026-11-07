@@ -238,3 +238,19 @@ def test_checkpoint_purpose_is_required_and_unknown_purpose_is_rejected(tmp_path
         runner.load_checkpoint(path, model, optimizer, cfg, allow_diagnostic=True)
     with pytest.raises(ValueError, match='purpose'):
         runner.save_checkpoint(tmp_path / 'unknown.pt', model, optimizer, cfg, 0, purpose='unknown')
+
+
+def test_v3_evaluation_accepts_only_complete_training_even_with_zero_updates(tmp_path):
+    from dataclasses import replace
+
+    cfg = replace(small_config(), ks_protocol='student-tokens-v3', edit_distance_threshold=1,
+                  on_policy_fraction=1.0)
+    model = torch.nn.Linear(2, 1)
+    optimizer = torch.optim.AdamW(model.parameters())
+    checkpoint = tmp_path / 'seed42.pt'
+    complete = len(runner.TRAIN_IDS) * cfg.train_epochs
+    runner.save_checkpoint(checkpoint, model, optimizer, cfg, complete - 1)
+    with pytest.raises(ValueError, match='completed training episodes'):
+        runner.load_checkpoint(checkpoint, model, None, cfg, evaluation=True)
+    runner.save_checkpoint(checkpoint, model, optimizer, cfg, complete, outer_updates=0)
+    assert runner.load_checkpoint(checkpoint, model, None, cfg, evaluation=True)['outer_updates'] == 0
