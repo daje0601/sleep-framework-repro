@@ -1,6 +1,6 @@
 # Experiment status
 
-Updated 2026-11-07. This is an unofficial independent reconstruction. A [pretrained H100 preflight](../results/arc-h100-preflight-v2/README.md) passed. There are
+Updated 2026-11-07. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**, with subsequent stages held by the local controller's projected total-cost check. Background execution is held and requires an explicit resume. There are
 **no quantitative paper reproduction results**.
 Published paper percentages are not measurements from this repository.
 
@@ -49,15 +49,15 @@ the provider after reconnection. See the [public report](../results/arc-h100-pre
 | --- | --- | --- |
 | ARC data provenance | Public SEAL files retrieved at the pinned commit; actual SHA256 values committed; explicit 11/8 source-task split and all retained test subtasks recorded | Data preparation and cached verification executed; this is not model evidence |
 | Scheduled memory and conversion | Bounded expert banks, identity-initialized residual stages, fixed token-local routing, explicit periods | H100 four-token conversion probe passed with zero maximum logit difference |
-| Transactional consolidation | Private teacher/student snapshots, receiver-only fitting, finite checks, atomic commit, rollback and optimizer reset | Four H100 consolidation events completed in one training-task preflight |
-| KS/LTI | Masked forward KL, detached mixed-policy sampling, frozen teacher semantic judging, edit reward | CPU objective/engine checks available; semantic-judge quality and ARC effectiveness unmeasured |
+| Transactional consolidation | Private teacher/student snapshots, receiver-only fitting, finite checks, atomic commit, rollback and optimizer reset | Four v3 H100 consolidation events completed, including expert 15:3 recovery |
+| KS/LTI | Masked forward KL, student-trajectory KS loss, frozen teacher semantic judging, thresholded token edit reward | CPU objective/engine checks and v3 H100 execution available; semantic-judge quality and ARC effectiveness unmeasured |
 | Dreaming and ReST-EM | Bounded JSON dreams, gradient ranking, isolated candidate adaptation, positive-reward outer updates | CPU correctness checks available; learned pretrained directive policy not trained |
 | Synthetic integration | Tiny random Llama, synthetic grids, actual updates, checkpoint continuation | Exercised locally through CPU tests; deliberately not ARC benchmark evidence |
 | Hosted CPU CI | Offline tests, synthetic CLI smoke, package build and uploaded evidence | [Initial public run passed](https://github.com/daje0601/sleep-framework-repro/actions/runs/42244614666) on commit `9091350` |
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
 | Pinned upstream SEAL ICL/TTT baseline | SHA256-verified source package, explicit integration patch, separate setup/run commands and metric summary | Actual preparation exercised; dependency compatibility and GPU execution not yet validated |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 v2 preflight passed; full train/evaluation comparison pending |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 v3 preflight passed; regular v3 training 0/11 and evaluation 0/40 on local budget hold |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 The first seed 42 training run allocated on H100 completed task `44f52bb0`.
@@ -71,6 +71,27 @@ first task's checkpoint on the persistent volume. No evaluation ran. The
 provider later showed zero active jobs, workspaces and hourly compute burn.
 See the [run report](../results/arc-h100-seed42-training-12/report.json) and
 [completed episode](../results/arc-h100-seed42-training-12/episodes.jsonl).
+
+The v3 seed 42 preflight used source `23c787ab89c9866d3113728602c94bd1cfe73697`
+and H100 80 GB job `job-tmnqojqtkm7b`. It succeeded with exit 0 after
+13 minutes 37 seconds of provider runtime. Four actual wake steps reduced
+the sampled training loss from 5.359 to 3.904, 1.936 and 0.970. Memory parameters
+changed, and expert 15:3 recovery completed in the fourth consolidation.
+The one sampled directive failed JSON parsing. A forced diagnostic directive
+verified inner and outer parameter updates and checkpoint restoration.
+Regular directive-policy training has completed 0/11 tasks and final evaluation
+0/40 attempts. The provider job is terminal, with zero active project GPU jobs,
+workspaces and compute burn at the recorded check. See the
+[v3 preflight report](../results/arc-h100-v3-seed42-preflight-16/report.json).
+
+The local controller then held training and evaluation after extrapolating the
+measured stage times against the available execution budget. The projection is
+about 2 hours 22 minutes for training and 4 hours 56 minutes for evaluation,
+with a bounded budget of 32.93 credits including runtime margin and release.
+These estimates use one training task and depend on subsequent task lengths,
+valid candidate counts and consolidation work. The local budget decision
+occurred before a training request was submitted. Background execution is
+held and requires an explicit resume.
 
 ## Evidence that must accompany a result
 

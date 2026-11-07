@@ -2,7 +2,9 @@
 
 An **unofficial, independent ARC reconstruction** of [Language Models Need Sleep](https://arxiv.org/html/2606.03979v2). This repository implements a runnable interpretation of the method and records its reconstruction choices. It is not affiliated with Google or the paper authors.
 
-**No quantitative paper result has been reproduced.** The current [v3 experiment](docs/PROTOCOL_V3.md) implements the token edit reward, student-trajectory KS loss and a demonstration-only directive prompt. Its seed 42 run starts from the pinned model. The earlier [v2 seed 42 H100 training run](results/arc-h100-seed42-training-12/report.json) saved a checkpoint after one of 11 tasks with zero outer policy updates, then stopped during memory consolidation on task two. Final evaluation has not run. The earlier [H100 80 GB preflight](results/arc-h100-preflight-v2/README.md) verified the training path and checkpoint restoration using forced diagnostic updates. See the [equation and ARC protocol review (Korean)](docs/PAPER_AUDIT_KO.md) for the differences from the paper and the [experiment status](docs/EXPERIMENT_STATUS.md) for run evidence.
+**No quantitative paper result has been reproduced.** The current [v3 experiment](docs/PROTOCOL_V3.md) implements the token edit reward, student-trajectory KS loss and a demonstration-only directive prompt. Its [seed 42 H100 preflight](results/arc-h100-v3-seed42-preflight-16/report.json) passed on source `23c787a`. Four wake steps reduced the sampled training loss from 5.359 to 0.970, and consolidation completed with recovery of expert 15:3. Diagnostic fixtures verified inner/outer updates and checkpoint restoration. The sampled directive failed JSON parsing. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**. The local controller holds subsequent stages after comparing their estimated total cost with the available execution budget. Background execution is held and requires an explicit resume. The cost estimate comes from one task and can vary across the remaining tasks.
+
+The earlier [v2 seed 42 H100 training run](results/arc-h100-seed42-training-12/report.json) saved a checkpoint after one of 11 tasks with zero outer policy updates, then stopped during memory consolidation on task two. The earlier [H100 80 GB preflight](results/arc-h100-preflight-v2/README.md) verified the training path and checkpoint restoration using forced diagnostic updates. See the [equation and ARC protocol review (Korean)](docs/PAPER_AUDIT_KO.md) for the differences from the paper and the [experiment status](docs/EXPERIMENT_STATUS.md) for run evidence.
 
 ## What is implemented
 
@@ -10,7 +12,7 @@ The PyTorch implementation combines scheduled memory stages, transactional conso
 
 | Path | Implementation | Pretrained ARC results |
 | --- | --- | --- |
-| Reconstructed Sleep | Memory, consolidation, dreaming, inner adaptation, outer policy update | H100 preflight passed; seed 42 training stopped after 1/11 tasks; no final accuracy |
+| Reconstructed Sleep | Memory, consolidation, dreaming, inner adaptation, outer policy update | v3 H100 preflight passed; regular v3 training 0/11 and evaluation 0/40 on local budget hold; earlier v2 stopped after 1/11 tasks |
 | `icl` | Visible examples and greedy grid decoding | Not run |
 | `ttt` | Inner LoRA on visible pairs with an identity augmentation directive | Not run |
 | `self_edit` | Learned JSON directives and inner LoRA, without CMS | Not run |
