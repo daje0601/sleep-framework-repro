@@ -1,0 +1,61 @@
+{
+  "stage": "preflight",
+  "seed": 42,
+  "source_commit": "23c787ab89c9866d3113728602c94bd1cfe73697",
+  "experiment_config_sha256": "b58a6937a424ee14d35b9e5011e837e09ec5ec7233b6266fee24dece887fa12e",
+  "protocol_fingerprint": "2b9fb55748c6f55fe2df219f4835ab93849f9b7ce6f2004143161b19d4753d2e",
+  "run_id": "sleep-preflight-20261107-h100-v3-seed42-16",
+  "job_id": "job-tmnqojqtkm7b",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "provider_state": "succeeded",
+  "exit_code": 0,
+  "started_at_utc": "2026-11-07T11:12:29Z",
+  "completed_at_utc": "2026-11-07T11:26:06Z",
+  "provider_runtime_seconds": 817.0,
+  "preflight_elapsed_seconds": 764.2962846849114,
+  "stage_wall_seconds": {
+    "wake_and_consolidation": 432.48131717182696,
+    "one_directive_generation": 1.8436927776783705,
+    "fixture_inner_sft": 0.5863733571022749,
+    "one_heldout_prediction": 0.1573919765651226
+  },
+  "peak_cuda_allocated_bytes": 34077712896,
+  "peak_cuda_reserved_bytes": 37006344192,
+  "test": {
+    "training_task_id": "44f52bb0",
+    "support_demonstrations": 5,
+    "sampled_directives": 1,
+    "valid_sampled_directives": 0,
+    "parse_error": "invalid JSON",
+    "forced_fixture_update": true,
+    "accepted_policy_update": false,
+    "fixture_inner_parameter_delta_l1": 11669.170510076308,
+    "fixture_outer_parameter_delta_l1": 2554.476368988598,
+    "fixture_checkpoint_resume_verified": true
+  },
+  "status_at_utc": "2026-11-07T11:33:29Z",
+  "seed42_regular_training_tasks_completed": 0,
+  "seed42_regular_training_tasks_planned": 11,
+  "seed42_final_evaluation_attempts_completed": 0,
+  "seed42_final_evaluation_attempts_planned": 40,
+  "seed42_final_evaluation_accuracy": null,
+  "paper_table_4_reported_sleep_accuracy": 0.8,
+  "reproduction_status": "undetermined",
+  "active_project_gpu_jobs": 0,
+  "running_project_workspaces": 0,
+  "current_gpu_burn_credits_per_hour": 0,
+  "remaining_work_estimate": {
+    "basis": "Single training-task H100 pilot. Duration may vary with task and candidate lengths. The capped budget includes 25% runtime margin, rounding to minutes and 135 seconds per stage for release.",
+    "training_seconds": 8513.65950136818,
+    "evaluation_seconds": 17785.469195926562,
+    "capped_training_seconds": 10680,
+    "capped_evaluation_seconds": 22260,
+    "hourly_credits": 3.57,
+    "budget_credits_with_release": 32.93325
+  },
+  "evidence_sha256": {
+    "preflight/preflight.json": "40876441e5b9d6ca5245bad9af65daeefafe5a567fc02a23ae5f2aed8ede2c1d",
+    "preflight_gate.json": "92de483bbee307c79bf37795c59519856f23b491bb394b541e7e3155792338b0",
+    "exit.json": "e89df0eae5ec7db81135aed16463968955c578bcc4f2ec43172eff351f080c17"
+  }
+}
