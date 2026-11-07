@@ -219,12 +219,55 @@ metadata/patch, partial or complete indexed results, and `exit.json`. Model
 weights and venvs are not copied to that mount. A hard kill can prevent final
 artifact copying; missing `exit.json` or summary is not success.
 
-No separate Cloud job builder or launch configuration is supplied by this
-worker, and no job has been submitted through it. Remaining blockers are a
-published source commit, a reviewed same-account one-job specification, actual
-image/interpreter availability, complete dependency resolution/source builds,
-driver/kernel compatibility, and successful baseline execution. A successful
-independent Sleep preflight does not validate this different baseline stack.
+### Standalone dry-run-first launcher
+
+`scripts/vessl_seal_launch.py` builds one separate Cloud job and reuses the
+existing `submit_and_monitor` implementation for unique-name checks, queue and
+runtime deadlines, interruption cleanup, and terminal-state verification. It
+does not route through the independent runner's stage/config/gate validator.
+TTT remains prohibited until its upstream stack and budget have been verified.
+
+Keep the reviewed job JSON outside Git. In addition to the worker fields above,
+the launcher requires `org`, `team`, `job_name`, `object_volume`, `hf_secret`,
+`repository`, `python_version`, and `queue_timeout_seconds`. Use only the current
+authorized account's existing identifiers. `hf_secret` is a secret-reference
+name; raw tokens and arbitrary environment fields are rejected. The initial
+launcher fixes Python `3.11`, the image digest above, and the published reviewed
+worker source SHA `ee39e0dbdfdb74edea0abe42283788fe6451b525`. A future worker revision
+requires an explicit reviewed launcher update.
+
+```sh
+python scripts/vessl_seal_launch.py --config /private/path/reviewed-seal-job.json
+```
+
+This default dry run prints the exact single-job command and worker-config hash
+without querying or changing Cloud state. It cannot prove a name is unused;
+the shared monitor checks provider name uniqueness only on explicit submission,
+and the worker independently rejects an existing persistent `run_id` directory.
+After reviewing capacity, budget, and the printed command, explicit submission
+would be:
+
+```sh
+python scripts/vessl_seal_launch.py --config /private/path/reviewed-seal-job.json --submit
+```
+
+Both `queue_timeout_seconds` and `timeout_seconds` must be explicit integers from
+1 through 86,400. Queue/image-pull waiting has its own finite local deadline;
+runtime starts at the first observed running state. The shared monitor retains
+its 60-second timing allowance and verified termination path. Inside the job,
+GNU timeout bounds bootstrap, pinned checkout, setup, and workload, with a
+30-second forced-kill grace. Stay attached until the terminal report appears.
+
+The launcher's forwarded environment has only `SLEEP_SEAL_JOB_JSON`,
+`HF_HUB_DISABLE_TELEMETRY`, and `TOKENIZERS_PARALLELISM`. `HF_TOKEN` uses the
+provider's `--secret` reference instead. There is no automatic follow-up job,
+core preflight gate, training sweep, or implicit TTT execution.
+
+No job has been submitted through this launcher. Remaining blockers are a
+reviewed same-account one-job specification, actual image/interpreter
+availability, complete dependency resolution/source builds, driver/kernel
+compatibility, and successful baseline execution. A successful independent
+Sleep preflight does not validate this different baseline stack.
 
 ## Preserved upstream recipe
 
