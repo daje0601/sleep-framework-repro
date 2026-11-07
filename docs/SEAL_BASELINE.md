@@ -137,6 +137,95 @@ in environment/account secrets. The model snapshot uses revision
 output beside results; record the GPU, driver, CUDA/container identity, time, and
 peak memory in the eventual execution report.
 
+## Separate bounded VESSL Cloud worker
+
+`scripts/cloud_seal_job.sh` is a separate execution entry point for **environment
+validation and upstream ICL only**. It neither submits jobs nor calls the VESSL
+API. It does not modify or dispatch through the independent runner's
+`cloud_job.sh` / `vessl_launch.py`, whose stages and dependency rules differ.
+Use only the already authorized Cloud organization/team, resource specifications,
+private volume, and HF secret reference. No other account or provider is needed.
+
+A metadata-reviewed official image candidate is:
+
+```text
+pytorch/pytorch@sha256:3deb633094acb02ba490e4da21bb37337327860e884c5b2290042a6db7d6b572
+```
+
+This is the Linux/amd64 manifest of
+[`pytorch/pytorch:2.7.0-cuda12.6-cudnn9-devel`](https://hub.docker.com/layers/pytorch/pytorch/2.7.0-cuda12.6-cudnn9-devel/images/sha256-3deb633094acb02ba490e4da21bb37337327860e884c5b2290042a6db7d6b572).
+`docker manifest inspect --verbose` verified that manifest digest. Its 20,687-byte
+config blob has SHA256
+`663476d9c40a1e5e7db63762c8795b92dd35555892cf33d18e95caaa74f7a087`;
+hash-checked registry metadata records `PYTORCH_VERSION=2.7.0`,
+`CUDA_VERSION=12.6.3`, and the Conda executable path. The official
+[PyTorch v2.7.0 Dockerfile](https://github.com/pytorch/pytorch/blob/v2.7.0/Dockerfile)
+defaults to Python 3.11. The image config does not expose the installed Python
+version, so the worker checks `python3.11` and its actual version at startup.
+Only manifests/config metadata were downloaded: no image layers were pulled and
+this baseline image has not been executed here. Development CUDA is a candidate
+for FlashInfer's source/JIT needs, not proof of successful kernel compilation.
+
+The worker accepts a reviewed `SLEEP_SEAL_JOB_JSON` with exactly these fields:
+
+| Field | Requirement |
+| --- | --- |
+| `source_commit` | Published full Git SHA containing this worker and the baseline preparer |
+| `image` | The exact reviewed image digest above |
+| `resource_spec` | Existing account resource identifier; runtime checks one A100/H100 with 80 GB |
+| `mount_path` | Existing writable private object-volume mount, for ordinary output files |
+| `run_id` | Fresh unique directory name; existing output is rejected |
+| `timeout_seconds` | Explicit integer from 1 through 86,400, covering setup and workload |
+| `stage` | `environment` or `icl`; no training or multi-seed sweep dispatch |
+
+Validate a local private specification without invoking CUDA, downloading models,
+or creating any job:
+
+```sh
+SLEEP_SEAL_JOB_JSON="$(cat /private/path/reviewed-seal-job.json)" \
+  bash scripts/cloud_seal_job.sh --validate-only
+```
+
+The minimal separate Cloud job builder should reuse the existing account's
+`vesslctl job create` flags and the existing single-job monitor/termination
+behavior, but supply this worker as its workload. Its reviewed command must:
+
+1. Start a finite shared deadline before bootstrap, clone the public repository,
+   fetch/check out the exact `source_commit`, and verify it. Ensure Bash, Git,
+   GNU `timeout`, `python3.11`/`venv`, and `nvcc` are available in the selected
+   development image. Do not run the independent runner's dependency installer.
+2. Set `SLEEP_DEADLINE_UNIX` and `SLEEP_SEAL_JOB_JSON`, mount the existing private
+   volume, and inject `HF_TOKEN` through the existing Cloud secret reference for
+   `stage=icl`. Never put token values in JSON or literal `--env` arguments.
+3. Run `bash scripts/cloud_seal_job.sh` inside an outer GNU timeout that also
+   bounds checkout. Keep the local monitor attached through queue/image-pull
+   time and terminate only that newly created job if its deadline is exceeded.
+4. Retrieve the private run artifacts and verified terminal state. An
+   environment-only job does not automatically launch ICL; a subsequent ICL job
+   is a separate explicitly reviewed submission.
+
+Inside either stage the worker checks the source SHA, prepares pinned data and
+the version-two target-safe ICL package, installs its separate upstream
+environment, runs the original `pip check`, verifies every direct dependency
+version, and imports Torch/Transformers/PEFT/vLLM/FlashInfer with CUDA. The
+`environment` stage then exits without downloading the model or running ARC
+inference. The `icl` stage performs the same checks before executing the
+original patched ICL evaluation and its distinct two-guess summary.
+
+All venvs, source trees, model snapshots, HF cache, extension caches, and atomic
+staging directories live under job-local `/tmp` POSIX storage. The object-volume
+mount receives streamed `console.log`, `environment.json`, the reviewed package
+metadata/patch, partial or complete indexed results, and `exit.json`. Model
+weights and venvs are not copied to that mount. A hard kill can prevent final
+artifact copying; missing `exit.json` or summary is not success.
+
+No separate Cloud job builder or launch configuration is supplied by this
+worker, and no job has been submitted through it. Remaining blockers are a
+published source commit, a reviewed same-account one-job specification, actual
+image/interpreter availability, complete dependency resolution/source builds,
+driver/kernel compatibility, and successful baseline execution. A successful
+independent Sleep preflight does not validate this different baseline stack.
+
 ## Preserved upstream recipe
 
 The fixed TTT path calls the original `ttt.py` and `arclib.update_model.TTT`:

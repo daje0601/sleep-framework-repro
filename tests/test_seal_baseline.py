@@ -1,7 +1,9 @@
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -284,3 +286,34 @@ def test_upstream_results_keep_two_guess_metric_separate_and_reject_missing_atte
     results.pop("4")
     with pytest.raises(ValueError, match="attempt"):
         seal.summarize_results(results, task_ids=EVALUATION_IDS, attempts=5)
+
+
+def worker_config():
+    return {'source_commit': 'a' * 40, 'mount_path': '/persistent', 'run_id': 'review-only',
+            'image': 'pytorch/pytorch@sha256:3deb633094acb02ba490e4da21bb37337327860e884c5b2290042a6db7d6b572',
+            'resource_spec': 'reviewed-gpu', 'timeout_seconds': 1800, 'stage': 'environment'}
+
+
+def run_worker_validation(config):
+    script = SCRIPT.with_name('cloud_seal_job.sh')
+    return subprocess.run(['bash', str(script), '--validate-only'],
+                          env={'PATH': os.environ['PATH'], 'SLEEP_SEAL_JOB_JSON': json.dumps(config)},
+                          capture_output=True, text=True, timeout=5)
+
+
+def test_cloud_worker_validation_prepares_no_jobs_or_gpu_imports():
+    result = run_worker_validation(worker_config())
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {'validated': True, 'stage': 'environment', 'submitted': False}
+
+
+@pytest.mark.parametrize('field,value', [('timeout_seconds', 0), ('timeout_seconds', True),
+                                         ('timeout_seconds', 86401), ('source_commit', 'main'),
+                                         ('image', 'pytorch/pytorch:latest'), ('mount_path', '/tmp'),
+                                         ('run_id', '../other'), ('stage', 'train'),
+                                         ('HF_TOKEN', 'not-a-secret-reference')])
+def test_cloud_worker_rejects_unbounded_unpinned_or_secret_bearing_specs(field, value):
+    config = worker_config()
+    config[field] = value
+    result = run_worker_validation(config)
+    assert result.returncode != 0
