@@ -271,7 +271,10 @@ def test_second_transfer_commits_the_same_function_as_final_objective_validation
     torch.testing.assert_close(chain(x), final_outputs[-1], rtol=0, atol=0)
 
 
-def test_one_unselected_new_receiver_aborts_every_chain_and_preserves_live_state():
+@pytest.mark.parametrize("route_unsupervised_token", [False, True])
+def test_stalled_receiver_fits_without_changing_healthy_peers_or_commit_routing(
+    route_unsupervised_token,
+):
     chains = nn.ModuleList(
         [
             MemoryChain(
@@ -284,29 +287,74 @@ def test_one_unselected_new_receiver_aborts_every_chain_and_preserves_live_state
             for _ in range(2)
         ]
     )
-    x = torch.ones(2, 2)
+    x = torch.tensor(
+        [[1.0, 1.0], [-1.0, -1.0] if route_unsupervised_token else [1.0, 1.0]]
+    )
     with torch.no_grad():
         for chain in chains:
             chain.stages[0].base.weight.copy_(torch.eye(2))
         receiver = chains[1].stages[1]
         old = receiver.allocate_expert()
         receiver.mark_trained(old)
-        # Every positive token selects the old expert, never the new second slot.
+        # The supervised token selects the old expert. A negative token can
+        # exercise the new expert in forward while its entire gradient is zero.
         receiver.routing_projection.copy_(torch.tensor([[1.0, 0.0], [-1.0, 0.0]]))
     sum(chain(x).square().mean() for chain in chains).backward()
     for chain in chains:
         chain.record_wake()
-    before = copy.deepcopy(chains.state_dict())
+    validations = []
 
     def objective(teacher, student):
+        outputs = [new(x) for new in student]
+        if not torch.is_grad_enabled():
+            assert all(int(new.stages[1].forced_expert) == -1 for new in student)
+            validations.append(
+                (
+                    [p.clone() for p in student[0].stages[1].experts[0].parameters()],
+                    [out.clone() for out in outputs],
+                )
+            )
         return sum(
-            (new(x) - old(x)).square().mean() for old, new in zip(teacher, student)
+            (out[0] - old(x)[0]).square().mean() for out, old in zip(outputs, teacher)
         )
 
-    with pytest.raises(ValueError, match="receiver expert.*update"):
-        consolidate(chains, 0, objective, base_lr=0.03, expert_lr=0.01, steps=2)
+    result = consolidate(chains, 0, objective, base_lr=0.03, expert_lr=0.01, steps=2)
+    assert result.recovered_experts == ((1, 1),)
+    assert len(result.losses) == len(result.recovery_losses) == len(validations) == 2
+    for before, after in zip(validations[0][0], validations[1][0]):
+        torch.testing.assert_close(before, after, rtol=0, atol=0)
+    for output, chain in zip(validations[-1][1], chains):
+        torch.testing.assert_close(output, chain(x), rtol=0, atol=0)
+    assert chains[1].stages[1].experts[1].up.weight.count_nonzero()
+    assert chains[1].stages[1].trained.tolist() == [True, True]
+
+
+def test_flat_objective_still_aborts_after_bounded_fit():
+    chain, x = setup_chain()
+    before = copy.deepcopy(chain.state_dict())
+    rng_before = torch.get_rng_state()
+    with pytest.raises(ValueError, match="no nonzero gradient during forced fitting"):
+        consolidate(
+            chain, 0, lambda t, s: 0 * s(x).sum(), base_lr=0.03, expert_lr=0.01, steps=2
+        )
     for key, value in before.items():
-        torch.testing.assert_close(chains.state_dict()[key], value, rtol=0, atol=0)
+        torch.testing.assert_close(chain.state_dict()[key], value, rtol=0, atol=0)
+    assert torch.equal(torch.get_rng_state(), rng_before)
+
+
+def test_unrepresentable_optimizer_delta_is_reported_separately():
+    chain, x = setup_chain()
+    with pytest.raises(
+        ValueError, match="nonzero gradient but no net parameter update"
+    ):
+        consolidate(
+            chain,
+            0,
+            lambda t, s: (s(x) - t(x)).square().mean(),
+            base_lr=0.03,
+            expert_lr=1e-52,
+            steps=1,
+        )
 
 
 @pytest.mark.parametrize(

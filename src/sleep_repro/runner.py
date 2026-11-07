@@ -180,7 +180,14 @@ def save_checkpoint(
 
 
 def load_checkpoint(
-    path, model, optimizer, cfg, *, evaluation=False, allow_diagnostic=False
+    path,
+    model,
+    optimizer,
+    cfg,
+    *,
+    evaluation=False,
+    allow_diagnostic=False,
+    resume_output=None,
 ):
     """Load real training state; allow fixtures only for diagnostic roundtrips.
 
@@ -195,10 +202,16 @@ def load_checkpoint(
         )
     if purpose == "diagnostic" and not allow_diagnostic:
         raise ValueError("Refusing diagnostic checkpoint for training or evaluation")
-    if state.get("protocol_fingerprint") != protocol_fingerprint():
-        raise ValueError(
-            "Checkpoint protocol mismatch: data registry or implementation changed"
-        )
+    target_protocol = protocol_fingerprint()
+    migration = None
+    if state.get("protocol_fingerprint") != target_protocol:
+        if resume_output is None or evaluation or allow_diagnostic or optimizer is None:
+            raise ValueError(
+                "Checkpoint protocol mismatch: data registry or implementation changed"
+            )
+        from .checkpoint_migration import reviewed_continuation
+
+        migration = reviewed_continuation(path, state, target_protocol, resume_output)
     if type(state.get("outer_updates")) is not int or state["outer_updates"] < 0:
         raise ValueError("Checkpoint lacks a valid outer-update count")
     expected = cfg.to_dict()
@@ -219,6 +232,8 @@ def load_checkpoint(
         torch.set_rng_state(state["torch_rng"])
         if state["cuda_rng"] and torch.cuda.is_available():
             torch.cuda.set_rng_state_all(state["cuda_rng"])
+    if migration is not None:
+        write_json(Path(resume_output) / "checkpoint_migration.json", migration)
     return {
         "next_episode": state["next_episode"],
         "outer_updates": state["outer_updates"],
@@ -294,14 +309,16 @@ def wake_episode(policy, tokenizer, cfg, task):
                     expert_lr=cfg.expert_lr,
                     steps=cfg.consolidation_steps,
                 )
-                events.append(
-                    {
-                        "event": "consolidation",
-                        "step": step,
-                        "level": level,
-                        "losses": list(result.losses),
-                    }
-                )
+                event = {
+                    "event": "consolidation",
+                    "step": step,
+                    "level": level,
+                    "losses": list(result.losses),
+                }
+                if result.recovered_experts:
+                    event["recovered_experts"] = list(result.recovered_experts)
+                    event["recovery_losses"] = list(result.recovery_losses)
+                events.append(event)
     episode.zero_grad(set_to_none=True)
     episode.requires_grad_(False)
     return episode, events
@@ -384,7 +401,7 @@ def train(cfg, output, resume=None):
     parameters = train_adapter(policy, "policy")
     optimizer = torch.optim.AdamW(parameters, lr=cfg.outer_lr)
     progress = (
-        load_checkpoint(resume, policy, optimizer, cfg)
+        load_checkpoint(resume, policy, optimizer, cfg, resume_output=output)
         if resume
         else {"next_episode": 0, "outer_updates": 0}
     )

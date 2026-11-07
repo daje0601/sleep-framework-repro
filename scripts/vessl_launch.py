@@ -53,6 +53,7 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
         "experiment_config",
         "preflight_gate",
         "checkpoint",
+        "resume_run_id",
     }
     if set(cfg) - allowed:
         raise ValueError(
@@ -108,6 +109,12 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
     stage = cfg.get("stage", "preflight")
     if stage not in ("preflight", "train", "evaluate"):
         raise ValueError("stage must be preflight, train, or evaluate")
+    if "resume_run_id" in cfg:
+        previous_id = _slug(cfg["resume_run_id"], "resume_run_id")
+        if stage != "train" or previous_id == cfg["run_id"] or "checkpoint" in cfg:
+            raise ValueError(
+                "resume_run_id requires a fresh training run directory and no evaluation checkpoint"
+            )
     if experiment.get("device") != "cuda":
         raise ValueError("cloud preflight/run must use device=cuda")
     if (

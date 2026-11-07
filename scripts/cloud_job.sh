@@ -95,7 +95,12 @@ gate={'passed':True,'source_commit':job['source_commit'],'image':job['image'],
 PY
         ;;
     train)
-        sleep-repro train --config "$run_dir/config.json" --output "$run_dir/train"
+        resume_checkpoint=$(python scripts/prepare_resume.py "$run_dir")
+        resume_args=()
+        if [[ -n "$resume_checkpoint" ]]; then
+            resume_args=(--resume "$resume_checkpoint")
+        fi
+        sleep-repro train --config "$run_dir/config.json" --output "$run_dir/train" "${resume_args[@]}"
         ;;
     evaluate)
         checkpoint=$(python -c 'import json,os; print(json.loads(os.environ["SLEEP_JOB_JSON"]).get("checkpoint") or "")')
