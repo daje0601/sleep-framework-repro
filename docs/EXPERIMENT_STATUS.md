@@ -1,6 +1,6 @@
 # Experiment status
 
-Updated 2026-11-07. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**, with subsequent stages held by the local controller's projected total-cost check. Background execution is held and requires an explicit resume. There are
+Updated 2026-11-07. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**. Following a credit top-up, the user authorized A100 80 GB continuation. Background supply checks have resumed. A new A100 preflight must pass before fresh training and evaluation on that resource. There are
 **no quantitative paper reproduction results**.
 Published paper percentages are not measurements from this repository.
 
@@ -57,7 +57,7 @@ the provider after reconnection. See the [public report](../results/arc-h100-pre
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
 | Pinned upstream SEAL ICL/TTT baseline | SHA256-verified source package, explicit integration patch, separate setup/run commands and metric summary | Actual preparation exercised; dependency compatibility and GPU execution not yet validated |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 v3 preflight passed; regular v3 training 0/11 and evaluation 0/40 on local budget hold |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 v3 preflight passed; A100 continuation awaiting supply and its own preflight; regular training 0/11 and evaluation 0/40 |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 The first seed 42 training run allocated on H100 completed task `44f52bb0`.
@@ -90,8 +90,14 @@ about 2 hours 22 minutes for training and 4 hours 56 minutes for evaluation,
 with a bounded budget of 32.93 credits including runtime margin and release.
 These estimates use one training task and depend on subsequent task lengths,
 valid candidate counts and consolidation work. The local budget decision
-occurred before a training request was submitted. Background execution is
-held and requires an explicit resume.
+occurred before a training request was submitted.
+
+The user subsequently added credit and authorized continuation on A100 80 GB.
+The controller preserves the H100 evidence and uses fresh A100 run identifiers
+for preflight, training and evaluation. A100 stage durations and budget will be
+calibrated from its own successful preflight. Supply and credit checks run
+locally without periodic model calls. Each stage owns one bounded GPU job,
+preserves persistent artifacts and verifies its terminal state and billing.
 
 ## Evidence that must accompany a result
 
