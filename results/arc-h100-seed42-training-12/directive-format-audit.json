@@ -1,0 +1,92 @@
+{
+  "stage": "retrospective_format_audit_only",
+  "source_training_jsonl_sha256": "421588ae33d7c05889530d491a9a71151888d4559d100ec2dfb9bf0fe9210e86",
+  "run_source_commit": "cead89d728a2713d1dc93312b71a5cc6ccef3e56",
+  "seed": 42,
+  "task_id": "44f52bb0",
+  "method": "Treat the entire completion as the registered parse_directive input for strict results. For diagnosis only, try JSONDecoder.raw_decode at each opening brace and apply the same strict parse_directive to the decoded substring. A suffix has nonblank preceding content and only whitespace after the object. Indices are zero-based. No substring was adapted, scored or accepted.",
+  "generated": 60,
+  "strict_valid_count": 0,
+  "starts_with_array_bracket_after_lstrip": 32,
+  "contains_schema_valid_object": 18,
+  "contains_schema_valid_object_indices": [
+    0,
+    2,
+    5,
+    13,
+    14,
+    20,
+    26,
+    28,
+    30,
+    39,
+    40,
+    43,
+    44,
+    50,
+    52,
+    55,
+    56,
+    58
+  ],
+  "ends_with_valid_object_after_other_content": 15,
+  "ends_with_valid_object_after_other_content_indices": [
+    0,
+    2,
+    5,
+    13,
+    14,
+    20,
+    30,
+    39,
+    40,
+    43,
+    44,
+    50,
+    55,
+    56,
+    58
+  ],
+  "matching_default_directive_among_suffixes": 13,
+  "suffix_directives": [
+    {
+      "directive": {
+        "color_permutation": null,
+        "epochs": 1,
+        "lr_scale": 1.0,
+        "reflect": false,
+        "rotations": [
+          0
+        ]
+      },
+      "count": 13
+    },
+    {
+      "directive": {
+        "color_permutation": null,
+        "epochs": 1,
+        "lr_scale": 1.0,
+        "reflect": false,
+        "rotations": [
+          1
+        ]
+      },
+      "count": 1
+    },
+    {
+      "directive": {
+        "color_permutation": null,
+        "epochs": 1,
+        "lr_scale": 1.0,
+        "reflect": false,
+        "rotations": [
+          0,
+          1
+        ]
+      },
+      "count": 1
+    }
+  ],
+  "actual_accepted_count": 0,
+  "actual_outer_updates": 0
+}

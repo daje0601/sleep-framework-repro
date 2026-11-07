@@ -2,7 +2,7 @@
 
 An **unofficial, independent ARC reconstruction** of [Language Models Need Sleep](https://arxiv.org/html/2606.03979v2). This repository implements a runnable interpretation of the method and records its reconstruction choices. It is not affiliated with Google or the paper authors.
 
-**No quantitative paper result has been reproduced.** A [pretrained H100 80 GB preflight](results/arc-h100-preflight-v2/README.md) passed on one training task: 32.94 GiB peak allocation and verified checkpoint restoration. Its generated directive was invalid; forced adapter updates are diagnostics, not learned-policy accuracy. CPU tests and a tiny random-model smoke check exercise correctness; they are not ARC benchmark evidence. See [experiment status](docs/EXPERIMENT_STATUS.md).
+**No quantitative paper result has been reproduced.** The [seed 42 H100 training run](results/arc-h100-seed42-training-12/report.json) saved a checkpoint after one of 11 tasks with zero outer policy updates, then stopped during memory consolidation on task two. Final evaluation has not run. The earlier [H100 80 GB preflight](results/arc-h100-preflight-v2/README.md) verified the training path and checkpoint restoration using forced diagnostic updates. See the [equation and ARC protocol review (Korean)](docs/PAPER_AUDIT_KO.md) for the differences from the paper and the [experiment status](docs/EXPERIMENT_STATUS.md) for run evidence.
 
 ## What is implemented
 
@@ -10,7 +10,7 @@ The PyTorch implementation combines scheduled memory stages, transactional conso
 
 | Path | Implementation | Pretrained ARC results |
 | --- | --- | --- |
-| Reconstructed Sleep | Memory, consolidation, dreaming, inner adaptation, outer policy update | H100 preflight passed; no final accuracy result |
+| Reconstructed Sleep | Memory, consolidation, dreaming, inner adaptation, outer policy update | H100 preflight passed; seed 42 training stopped after 1/11 tasks; no final accuracy |
 | `icl` | Visible examples and greedy grid decoding | Not run |
 | `ttt` | Inner LoRA on visible pairs with an identity augmentation directive | Not run |
 | `self_edit` | Learned JSON directives and inner LoRA, without CMS | Not run |
