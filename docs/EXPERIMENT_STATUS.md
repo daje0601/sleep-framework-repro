@@ -60,6 +60,18 @@ the provider after reconnection. See the [public report](../results/arc-h100-pre
 | Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 v2 preflight passed; full train/evaluation comparison pending |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
+The first seed 42 training run allocated on H100 completed task `44f52bb0`.
+All 60 directive candidates failed parsing or schema validation, yielding
+zero outer optimizer steps. The next task, `4be741c5`, stopped during wake
+consolidation because the newly allocated receiver in chain 15, slot 3 had
+unchanged parameters after fitting. The exception preserves live memory state.
+The run recorded no per-token route or per-branch gradient for this failure,
+so its precise cause is undetermined. The process exited 1 and left the
+first task's checkpoint on the persistent volume. No evaluation ran. The
+provider later showed zero active jobs, workspaces and hourly compute burn.
+See the [run report](../results/arc-h100-seed42-training-12/report.json) and
+[completed episode](../results/arc-h100-seed42-training-12/episodes.jsonl).
+
 ## Evidence that must accompany a result
 
 The [upstream audit](PROTOCOL_V2.md) found additional scientific differences:
