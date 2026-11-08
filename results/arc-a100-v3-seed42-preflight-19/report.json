@@ -1,0 +1,85 @@
+{
+  "stage": "preflight",
+  "seed": 42,
+  "source_commit": "23c787ab89c9866d3113728602c94bd1cfe73697",
+  "experiment_config_sha256": "b58a6937a424ee14d35b9e5011e837e09ec5ec7233b6266fee24dece887fa12e",
+  "protocol_fingerprint": "2b9fb55748c6f55fe2df219f4835ab93849f9b7ce6f2004143161b19d4753d2e",
+  "run_id": "sleep-preflight-20261107-a100-v3-seed42-19",
+  "job_id": "job-krvlwu0644ho",
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "resource_spec": "resourcespec-a100x1",
+  "container_image": "pytorch/pytorch@sha256:924707fa828f821c9a82d987b405675df6369eee5ce368aece6757b025ffcde5",
+  "provider_state": "succeeded",
+  "exit_code": 0,
+  "started_at_utc": "2026-11-07T16:36:14Z",
+  "completed_at_utc": "2026-11-07T16:49:44Z",
+  "provider_runtime_seconds": 810.0,
+  "preflight_elapsed_seconds": 669.237703809049,
+  "stage_wall_seconds": {
+    "wake_and_consolidation": 500.55159623990767,
+    "one_directive_generation": 2.570160567993298,
+    "fixture_inner_sft": 0.8109952809754759,
+    "one_heldout_prediction": 0.21726795891299844
+  },
+  "peak_cuda_allocated_bytes": 35207520256,
+  "peak_cuda_reserved_bytes": 37687918592,
+  "test": {
+    "training_task_id": "44f52bb0",
+    "support_demonstrations": 5,
+    "sampled_directives": 1,
+    "valid_sampled_directives": 0,
+    "parse_error": "invalid JSON",
+    "forced_fixture_update": true,
+    "accepted_policy_update": false,
+    "fixture_checkpoint_resume_verified": true
+  },
+  "memory_training": {
+    "wake_losses": [
+      5.359460353851318,
+      3.9774813652038574,
+      2.1001715660095215,
+      1.0603605508804321
+    ],
+    "memory_base_delta_l1": 99.65151980390019,
+    "consolidation_recovery": [
+      {
+        "step": 3,
+        "recovered_experts": [
+          [
+            15,
+            3
+          ]
+        ],
+        "recovery_losses": [
+          15.808487892150879,
+          0.0010756721021607518
+        ]
+      }
+    ]
+  },
+  "status_at_utc": "2026-11-08T03:01:16+00:00",
+  "seed42_regular_training_tasks_completed": 0,
+  "seed42_regular_training_tasks_planned": 11,
+  "seed42_final_evaluation_attempts_completed": 0,
+  "seed42_final_evaluation_attempts_planned": 40,
+  "seed42_final_evaluation_accuracy": null,
+  "paper_table_4_reported_sleep_accuracy": 0.8,
+  "reproduction_status": "undetermined",
+  "training_submission_status": "Awaiting A100 supply after successful preflight. No regular training request has been submitted.",
+  "active_project_gpu_jobs": 0,
+  "current_gpu_burn_credits_per_hour": 0,
+  "remaining_work_estimate": {
+    "basis": "Single-task A100 pilot with 25% runtime margin, rounding and release allowance. Actual total remains unmeasured.",
+    "training_seconds": 9040.972199846525,
+    "evaluation_seconds": 20472.937121658353,
+    "capped_training_seconds": 11340,
+    "capped_evaluation_seconds": 25620,
+    "hourly_credits": 1.77,
+    "budget_credits_with_release": 18.304750000000002
+  },
+  "evidence_sha256": {
+    "preflight/preflight.json": "6d965e243755cb96f5048f8f82b17c175f38d16f43301519e512bb364703116e",
+    "preflight_gate.json": "b56656dbc960d7b59d25f0eef2355f2308f92d4b6da3fd3ed022022f5f892e40",
+    "exit.json": "e89df0eae5ec7db81135aed16463968955c578bcc4f2ec43172eff351f080c17"
+  }
+}

@@ -1,6 +1,6 @@
 # Experiment status
 
-Updated 2026-11-07. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**. Following a credit top-up, the user authorized A100 80 GB continuation. Background supply checks have resumed. A new A100 preflight must pass before fresh training and evaluation on that resource. There are
+Updated 2026-11-08. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**. Following a credit top-up, the user authorized A100 80 GB continuation. The [A100 preflight](../results/arc-a100-v3-seed42-preflight-19/report.json) passed with exit 0. Background supply checks are now awaiting an A100 allocation for regular training. There are
 **no quantitative paper reproduction results**.
 Published paper percentages are not measurements from this repository.
 
@@ -57,7 +57,7 @@ the provider after reconnection. See the [public report](../results/arc-h100-pre
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
 | Pinned upstream SEAL ICL/TTT baseline | SHA256-verified source package, explicit integration patch, separate setup/run commands and metric summary | Actual preparation exercised; dependency compatibility and GPU execution not yet validated |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 v3 preflight passed; A100 continuation awaiting supply and its own preflight; regular training 0/11 and evaluation 0/40 |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 and A100 v3 preflights passed; regular training 0/11 and evaluation 0/40 awaiting A100 supply |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 The first seed 42 training run allocated on H100 completed task `44f52bb0`.
@@ -94,8 +94,15 @@ occurred before a training request was submitted.
 
 The user subsequently added credit and authorized continuation on A100 80 GB.
 The controller preserves the H100 evidence and uses fresh A100 run identifiers
-for preflight, training and evaluation. A100 stage durations and budget will be
-calibrated from its own successful preflight. Supply and credit checks run
+for preflight, training and evaluation. A100 preflight job `job-krvlwu0644ho`
+succeeded on 2026-11-07 from 16:36:14 to 16:49:44 UTC, with exit 0 and
+checkpoint restoration verified. Four wake losses were 5.359, 3.977, 2.100
+and 1.060, with expert 15:3 recovery completed. These sampled losses use
+different visible demonstrations. The one generated directive failed JSON
+parsing, and adapter-update checks used a forced diagnostic fixture. Regular
+training and final evaluation remain unexecuted. The preflight GPU was released,
+and the next stage is awaiting another A100 allocation. The measured stage
+timings now supply the A100 training/evaluation budget. Supply and credit checks run
 locally without periodic model calls. Each stage owns one bounded GPU job,
 preserves persistent artifacts and verifies its terminal state and billing.
 
