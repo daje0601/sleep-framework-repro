@@ -13,13 +13,13 @@
   "outer_optimizer_steps": 48,
   "training_log_sha256": "7acc8547e05a35417bc26e6b6e65411eb2e927bd5720f1dcf06c20d5163e6761",
   "checkpoint_bytes_at_check": 9173462097,
-  "evaluation_attempts_completed": 37,
-  "accuracy": null,
+  "evaluation_attempts_completed": 40,
+  "accuracy": 0.2,
   "observations": [
     "Tasks 1 and 7 accepted 12 and 15 improved directives; cumulative 48 policy optimizer steps.",
     "Other completed tasks accepted none. All valid directives after the first task normalize to one adaptation setting."
   ],
-  "paper_reproduction_status": "Training complete; final evaluation not yet complete.",
+  "paper_reproduction_status": "Seed 42 independent reconstruction measured 20 percent; paper 80 percent target unmatched.",
   "exit_code": 0,
   "provider_completed_at_utc": "2026-11-09T04:58:40Z",
   "valid_directives": 613,
@@ -34,8 +34,8 @@
     "train/training.jsonl": "7acc8547e05a35417bc26e6b6e65411eb2e927bd5720f1dcf06c20d5163e6761",
     "train/training_summary.json": "5987efeb44e3b48ff92b3f2c6d7fd51d53898a7035c7b29302f0eb68c6c999f3"
   },
-  "evaluation_job_id": "job-wvbhdrhigz7m",
-  "evaluation_status_at_check": "failed at finite execution limit; completed prefix retained",
+  "evaluation_job_id": "job-sluqo97xa2is",
+  "evaluation_status_at_check": "succeeded",
   "evaluation_allocation_attempts": [
     {
       "job_id": "job-ad85lxfclxol",
@@ -69,7 +69,7 @@
       4
     ]
   ],
-  "evaluation_resume_status": "running genuine preflight, then only the three missing attempts on the same allocation",
+  "evaluation_resume_status": "succeeded; 37 preserved and 3 computed attempts verified",
   "evaluation_resume_job_id": "job-sluqo97xa2is",
   "evaluation_resume_run_id": "sleep-eval-resume-20261109-a100-v3-seed42-22",
   "evaluation_controller_source_commit": "aaa23a904f7d2c4bf82729e643af4d988737a0a0",
@@ -78,5 +78,11 @@
   "evaluation_preserved_attempts_sha256": "fa55aecd524ecc5dffa985f93cb85ee097392908c903d00dd070126a017cb1ee",
   "evaluation_preserved_provenance_sha256": "da8d4ca868f31bf8514913cc17abf15b51c51848600312e2cdee7cc74bc2e2df",
   "controller_tests_passed": 280,
-  "controller_tests_cuda_skipped": 2
+  "controller_tests_cuda_skipped": 2,
+  "successful_attempts": 8,
+  "tasks_solved": 3,
+  "total_tasks": 8,
+  "difference_percentage_points": -60,
+  "matches_paper_number_for_this_seed": false,
+  "final_result_url": "https://github.com/daje0601/sleep-framework-repro/blob/main/results/arc-a100-v3-seed42/report.json"
 }
