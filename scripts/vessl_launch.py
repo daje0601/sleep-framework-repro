@@ -54,6 +54,11 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
         "preflight_gate",
         "checkpoint",
         "resume_run_id",
+        "resume_eval_run_id",
+        "resume_eval_job_id",
+        "resume_eval_job_name",
+        "resume_eval_attempts_sha256",
+        "resume_eval_provenance_sha256",
     }
     if set(cfg) - allowed:
         raise ValueError(
@@ -107,14 +112,36 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
             "mount_path must identify a dedicated persistent output directory"
         )
     stage = cfg.get("stage", "preflight")
-    if stage not in ("preflight", "train", "evaluate"):
-        raise ValueError("stage must be preflight, train, or evaluate")
+    if stage not in ("preflight", "train", "evaluate", "evaluate-resume"):
+        raise ValueError("stage must be preflight, train, evaluate, or evaluate-resume")
     if "resume_run_id" in cfg:
         previous_id = _slug(cfg["resume_run_id"], "resume_run_id")
         if stage != "train" or previous_id == cfg["run_id"] or "checkpoint" in cfg:
             raise ValueError(
                 "resume_run_id requires a fresh training run directory and no evaluation checkpoint"
             )
+    resume_fields = {
+        "resume_eval_run_id",
+        "resume_eval_job_id",
+        "resume_eval_job_name",
+        "resume_eval_attempts_sha256",
+        "resume_eval_provenance_sha256",
+    }
+    if stage == "evaluate-resume":
+        for name in ("resume_eval_run_id", "resume_eval_job_id", "resume_eval_job_name"):
+            _slug(cfg.get(name), name)
+        if not re.fullmatch(r"job-[a-z0-9]+", cfg["resume_eval_job_id"]):
+            raise ValueError("resume_eval_job_id must identify a concrete VESSL job")
+        if (
+            cfg["resume_eval_run_id"] == cfg["run_id"]
+            or cfg["resume_eval_job_name"] == cfg["job_name"]
+        ):
+            raise ValueError("evaluation continuation requires a fresh run and job name")
+        for name in ("resume_eval_attempts_sha256", "resume_eval_provenance_sha256"):
+            if not re.fullmatch(r"[a-f0-9]{64}", str(cfg.get(name, ""))):
+                raise ValueError(f"{name} must be a pinned SHA256 digest")
+    elif resume_fields.intersection(cfg):
+        raise ValueError("resume_eval fields require stage=evaluate-resume")
     if experiment.get("device") != "cuda":
         raise ValueError("cloud preflight/run must use device=cuda")
     if (
@@ -160,12 +187,16 @@ def build_command(cfg: dict, experiment: dict, *, cli: str = "vesslctl") -> list
             "checkpoint must be an absolute path inside the persistent volume"
         )
     if (
-        stage == "evaluate"
+        stage in ("evaluate", "evaluate-resume")
         and experiment.get("mode") in ("sleep", "self_edit")
         and not checkpoint
     ):
         raise ValueError("learned-policy evaluation requires a persistent checkpoint")
-    if stage != "preflight":
+    if stage == "evaluate-resume" and (
+        not checkpoint or PurePosixPath(checkpoint).parts[-2:] != ("train", "checkpoint.pt")
+    ):
+        raise ValueError("evaluation continuation requires a persistent train/checkpoint.pt")
+    if stage not in ("preflight", "evaluate-resume"):
         gate_path = cfg.get("preflight_gate")
         if not gate_path:
             raise ValueError(
@@ -375,6 +406,19 @@ def submit_and_monitor(cfg, command, *, run=None, now=None, sleep=None):
                         f"Termination not verified for {job_id}; manual attention required"
                     )
                 sleep(min(5, cleanup_deadline - now()))
+
+    if cfg.get("stage") == "evaluate-resume":
+        parent = read_json(["job", "show", cfg["resume_eval_job_id"]])
+        expected_parent = {
+            "slug": cfg["resume_eval_job_id"],
+            "name": cfg["resume_eval_job_name"],
+            "resourceSpecSlug": cfg["resource_spec"],
+            "imageUri": cfg["image"],
+        }
+        if any(parent.get(key) != value for key, value in expected_parent.items()):
+            raise ValueError("Evaluation parent job identity, GPU, or image mismatch")
+        if str(parent.get("workloadState", "")).lower() not in TERMINAL_STATES:
+            raise ValueError("Evaluation parent job must be terminal before continuation")
 
     # Never create a duplicate name: fallback cleanup must not target an older job.
     if named_jobs():

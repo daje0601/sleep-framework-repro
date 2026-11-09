@@ -1,5 +1,12 @@
 # Experiment status
 
+The first allocated final evaluation reached 37/40 attempts before its
+25,620-second execution limit on 2026-11-09. The provider job failed at
+14:15:33 UTC, and its completed prefix and trained checkpoint were retained.
+No final accuracy is available. GPU termination and zero billing burn were
+verified. The continuation controller runs a genuine preflight and the three
+missing attempts in one allocation, preserving task seeds and numerical code.
+
 On 2026-11-08, the first v3 A100 training request waited 30 minutes for allocation
 and was terminated at its queue deadline. The launcher never observed
 `running`, and the persistent run directory was empty. At that timeout regular training was

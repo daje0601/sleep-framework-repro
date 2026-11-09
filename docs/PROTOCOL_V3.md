@@ -1,5 +1,12 @@
 # ARC Sleep v3, seed 42
 
+Interrupted evaluation retains the immutable completed attempt prefix. The
+continuation controller verifies its hashes, task order and seeds, then executes
+only missing attempts using the same trained checkpoint and numerical functions.
+Its separate controller commit is recorded alongside the numerical protocol
+fingerprint. A combined batch runs a genuine preflight and the continuation on
+the same GPU allocation. Final scoring requires all 40 unique attempts.
+
 This experiment targets the 80% success rate reported for Sleep in Table 4. The starting weights are the pinned Llama-3.2-1B-Instruct snapshot. Seed 42 starts at the first of the 11 registered training tasks. The previous H100 checkpoint belongs to v2. The v3 evaluation loader requires a training checkpoint with the same protocol fingerprint, matching settings and the full episode count. [Sleep Table 4 and Appendix B.3](https://arxiv.org/html/2606.03979v2#A2.SS3) · [Experiment configuration](../configs/arc_sleep_v3.json)
 
 **Equation (4).** Compute Levenshtein distance on the generated token IDs of the complete student and teacher dreams, including their shared teacher prefix. For distance at most `z₀`, use one minus the distance divided by the longer dream length. Return zero above that threshold. Two empty dreams receive one. The ARC appendix supplies no numeric threshold. We fixed **z₀ = 1 token** before evaluation, the smallest cutoff allowing partial credit for one edit. An actual terminal control token is omitted from dream content. [Sleep §3.3](https://arxiv.org/html/2606.03979v2#S3.SS3) · [Reward and loss](../src/sleep_repro/objectives.py)

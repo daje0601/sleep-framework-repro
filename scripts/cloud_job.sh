@@ -79,10 +79,9 @@ experiment=json.loads(os.environ['SLEEP_EXPERIMENT_JSON'])
     'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()},indent=2)+'\n')
 subprocess.run(['python','scripts/prepare_data.py','--output',experiment.get('data_dir','data/arc')],check=True)
 PY
-case "${settings[3]}" in
-    preflight)
-        sleep-repro preflight --config "$run_dir/config.json" --output "$run_dir/preflight"
-        python - <<'PY'
+run_preflight() {
+    sleep-repro preflight --config "$run_dir/config.json" --output "$run_dir/preflight"
+    python - <<'PY'
 import hashlib, json, os
 from pathlib import Path
 run=Path(os.environ['SLEEP_RUN_DIR'])
@@ -93,6 +92,11 @@ gate={'passed':True,'source_commit':job['source_commit'],'image':job['image'],
       'config_sha256':hashlib.sha256(json.dumps(config,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()}
 (run/'preflight_gate.json').write_text(json.dumps(gate,indent=2)+'\n')
 PY
+}
+
+case "${settings[3]}" in
+    preflight)
+        run_preflight
         ;;
     train)
         resume_checkpoint=$(python scripts/prepare_resume.py "$run_dir")
@@ -109,6 +113,10 @@ PY
         else
             sleep-repro evaluate --config "$run_dir/config.json" --output "$run_dir/evaluate"
         fi
+        ;;
+    evaluate-resume)
+        run_preflight
+        python scripts/continue_evaluation.py "$run_dir"
         ;;
     *) echo 'Invalid stage' >&2; exit 2 ;;
 esac
