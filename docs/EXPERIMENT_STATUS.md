@@ -10,7 +10,7 @@ running observations and empty-output verification, and one-minute supply
 monitoring resumed. The earlier chat notification failed with an active-writer
 conflict and is preserved locally. See the [allocation report](../results/arc-a100-v3-seed42-training-20/report.json).
 
-Updated 2026-11-09. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. The latest partial v3 training snapshot records **9/11 tasks and 48 policy optimizer updates** and final evaluation at **0/40 attempts**. Following a credit top-up, the user authorized A100 80 GB continuation. The [A100 preflight](../results/arc-a100-v3-seed42-preflight-19/report.json) passed with exit 0. The A100 training job is running. The first task accepted 12 directives with improved training-only validation scores. Tasks 2–5 completed with no accepted improvements and repeated one directive configuration per task. See the [partial training report](../results/arc-a100-v3-seed42-training-20-r1/report.json). There are
+Updated 2026-11-09. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. The completed v3 training run records **11/11 tasks and 48 policy optimizer updates** and final evaluation at **0/40 attempts**. Following a credit top-up, the user authorized A100 80 GB continuation. The [A100 preflight](../results/arc-a100-v3-seed42-preflight-19/report.json) passed with exit 0. The A100 training job succeeded, and evaluation job `job-ad85lxfclxol` has been submitted. The first task accepted 12 directives with improved training-only validation scores. Tasks 2–5 completed with no accepted improvements and repeated one directive configuration per task. See the [completed training report](../results/arc-a100-v3-seed42-training-20-r1/report.json). There are
 **no quantitative paper reproduction results**.
 Published paper percentages are not measurements from this repository.
 
@@ -67,7 +67,7 @@ the provider after reconnection. See the [public report](../results/arc-h100-pre
 | ICL / TTT / consolidation | Reconstructed evaluation paths and configs provided | Pretrained ARC execution not run |
 | `self_edit` | Reconstructed JSON self-edit policy without CMS | Pretrained training/evaluation not run; differs from official SEAL |
 | Pinned upstream SEAL ICL/TTT baseline | SHA256-verified source package, explicit integration patch, separate setup/run commands and metric summary | Actual preparation exercised; dependency compatibility and GPU execution not yet validated |
-| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 and A100 v3 preflights passed; partial training 9/11 with 48 policy updates; evaluation 0/40 |
+| Reconstructed Sleep ARC | Training, evaluation, checkpoint/resume and seed aggregation entry points provided | H100 and A100 v3 preflights passed; training complete at 11/11 with 48 policy updates; final evaluation submitted |
 | Reasoning, knowledge incorporation, classification, translation, long context | Future scope | Experiment pipelines not implemented; no execution or reproduction claim |
 
 The first seed 42 training run allocated on H100 completed task `44f52bb0`.

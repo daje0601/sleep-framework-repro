@@ -1,0 +1,7 @@
+{
+  "completed_episodes": 11,
+  "checkpoint": "checkpoint.pt",
+  "outer_updates": 48,
+  "policy_trained": true,
+  "paper_result_reproduced": false
+}
