@@ -34,6 +34,21 @@
     "train/training.jsonl": "7acc8547e05a35417bc26e6b6e65411eb2e927bd5720f1dcf06c20d5163e6761",
     "train/training_summary.json": "5987efeb44e3b48ff92b3f2c6d7fd51d53898a7035c7b29302f0eb68c6c999f3"
   },
-  "evaluation_job_id": "job-ad85lxfclxol",
-  "evaluation_status_at_check": "scheduling"
+  "evaluation_job_id": "job-wvbhdrhigz7m",
+  "evaluation_status_at_check": "scheduling",
+  "evaluation_allocation_attempts": [
+    {
+      "job_id": "job-ad85lxfclxol",
+      "state": "terminated",
+      "queue_timeout_seconds": 1800,
+      "execution_started": false,
+      "allocation_outcome": "queue deadline expired without running"
+    },
+    {
+      "job_id": "job-wvbhdrhigz7m",
+      "state": "scheduling",
+      "queue_timeout_seconds": 7200,
+      "run_id": "sleep-eval-20261107-a100-v3-seed42-21-r1"
+    }
+  ]
 }
