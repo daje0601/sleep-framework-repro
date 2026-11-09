@@ -10,7 +10,7 @@ running observations and empty-output verification, and one-minute supply
 monitoring resumed. The earlier chat notification failed with an active-writer
 conflict and is preserved locally. See the [allocation report](../results/arc-a100-v3-seed42-training-20/report.json).
 
-Updated 2026-11-08. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**. Following a credit top-up, the user authorized A100 80 GB continuation. The [A100 preflight](../results/arc-a100-v3-seed42-preflight-19/report.json) passed with exit 0. Background supply checks are now awaiting an A100 allocation for regular training. There are
+Updated 2026-11-09. This is an unofficial independent reconstruction. The [v3 seed 42 H100 preflight](../results/arc-h100-v3-seed42-preflight-16/report.json) passed. Regular v3 training is at **0/11 tasks** and final evaluation at **0/40 attempts**. Following a credit top-up, the user authorized A100 80 GB continuation. The [A100 preflight](../results/arc-a100-v3-seed42-preflight-19/report.json) passed with exit 0. Background supply checks are now awaiting an A100 allocation for regular training. There are
 **no quantitative paper reproduction results**.
 Published paper percentages are not measurements from this repository.
 
