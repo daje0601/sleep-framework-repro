@@ -69,5 +69,14 @@
       4
     ]
   ],
-  "evaluation_resume_status": "controller prepared; not yet submitted"
+  "evaluation_resume_status": "running genuine preflight, then only the three missing attempts on the same allocation",
+  "evaluation_resume_job_id": "job-sluqo97xa2is",
+  "evaluation_resume_run_id": "sleep-eval-resume-20261109-a100-v3-seed42-22",
+  "evaluation_controller_source_commit": "aaa23a904f7d2c4bf82729e643af4d988737a0a0",
+  "numerical_source_commit": "23c787ab89c9866d3113728602c94bd1cfe73697",
+  "numerical_package_byte_identical": true,
+  "evaluation_preserved_attempts_sha256": "fa55aecd524ecc5dffa985f93cb85ee097392908c903d00dd070126a017cb1ee",
+  "evaluation_preserved_provenance_sha256": "da8d4ca868f31bf8514913cc17abf15b51c51848600312e2cdee7cc74bc2e2df",
+  "controller_tests_passed": 280,
+  "controller_tests_cuda_skipped": 2
 }
