@@ -1,0 +1,28 @@
+{
+  "stage": "train",
+  "seed": 42,
+  "source_commit": "23c787ab89c9866d3113728602c94bd1cfe73697",
+  "resource_spec": "resourcespec-a100x1",
+  "job_id": "job-ijf4ytk3owv9",
+  "run_id": "sleep-train-20261107-a100-v3-seed42-20",
+  "provider_state": "terminated",
+  "launcher_exit_code": 1,
+  "allocation_outcome": "queue deadline expired without running",
+  "queue_timeout_seconds": 1800,
+  "execution_started": false,
+  "first_running_elapsed_seconds": null,
+  "remote_artifact_entries": 0,
+  "completed_train_tasks": 0,
+  "expected_train_tasks": 11,
+  "evaluation_attempts_completed": 0,
+  "accuracy": null,
+  "terminal_verified": true,
+  "cleanup_requested": true,
+  "billing_burn_rate_per_hour_at_recheck": 0,
+  "monitor_recovery": {
+    "cause": "Provider startedAt was set during scheduling. The parent misclassified empty queue expiry as execution failure.",
+    "correction": "Use job-matched launcher running observations, verified cleanup and empty persistent output. Continue supply monitoring.",
+    "notification_delivery": "CLI resume failed because the desktop chat had an active writer. The failure is preserved in local logs."
+  },
+  "launcher_log_sha256": "3050d6c9bf3980dd20ae67d3fee8d95ec47892d1004248c66702a174e6cedf0b"
+}
