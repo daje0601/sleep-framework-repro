@@ -1,24 +1,24 @@
 {
   "stage": "train",
   "report_kind": "partial_training_progress",
-  "observed_utc": "2026-11-09T03:39:21.246141+00:00",
+  "observed_utc": "2026-11-09T04:31:12.487798+00:00",
   "job_id": "job-uiadtdoszrq5",
   "run_id": "sleep-train-20261107-a100-v3-seed42-20-r1",
   "source_commit": "23c787ab89c9866d3113728602c94bd1cfe73697",
   "resource_spec": "resourcespec-a100x1",
   "provider_state_at_check": "running",
-  "completed_train_tasks": 5,
+  "completed_train_tasks": 9,
   "expected_train_tasks": 11,
-  "accepted_count": 12,
-  "outer_optimizer_steps": 24,
-  "training_log_sha256": "62511d4dd802881e166475f3626641666ebec79036f8b4729d1be020da64efec",
+  "accepted_count": 27,
+  "outer_optimizer_steps": 48,
+  "training_log_sha256": "d53e3f717359157191c86fa5f3baea27d4e5dcae3c0dab9e4614370698866476",
   "checkpoint_bytes_at_check": 9173462097,
-  "checkpoint_last_modified_utc_at_check": "2026-11-09T03:35:28Z",
+  "checkpoint_last_modified_utc_at_check": "2026-11-09T04:29:17Z",
   "evaluation_attempts_completed": 0,
   "accuracy": null,
   "observations": [
-    "First task accepted 12 improved directives and performed 24 policy optimizer steps.",
-    "Tasks 2-5 completed with valid but repeated identical directives and no training-validation improvement."
+    "Tasks 1 and 7 accepted 12 and 15 improved directives; cumulative 48 policy optimizer steps.",
+    "Other completed tasks accepted none. All valid directives after the first task normalize to one adaptation setting."
   ],
   "paper_reproduction_status": "Final training and evaluation incomplete."
 }

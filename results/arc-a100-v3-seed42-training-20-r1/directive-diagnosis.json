@@ -1,0 +1,113 @@
+{
+  "scope": "Training-only log and pinned source audit; evaluation targets were not inspected.",
+  "training_log_sha256": "d53e3f717359157191c86fa5f3baea27d4e5dcae3c0dab9e4614370698866476",
+  "source_commit": "23c787ab89c9866d3113728602c94bd1cfe73697",
+  "completed_episodes_at_audit": 9,
+  "first_task_accepted_samples": 12,
+  "first_task_unique_accepted_settings": 1,
+  "policy_epochs": 8,
+  "outer_effective_batch_size": 5,
+  "first_task_optimizer_steps": 24,
+  "policy_sft_loss_first": 1.1555041372776031,
+  "policy_sft_loss_last": 0.002972002374008298,
+  "repeated_setting": {
+    "color_permutation": null,
+    "epochs": 1,
+    "lr_scale": 1.0,
+    "reflect": false,
+    "rotations": [
+      0,
+      1,
+      2,
+      3
+    ]
+  },
+  "zero_update_explanation": "Every tested candidate scored baseline0/adapted0 on the training-only heldout demonstration. Strict positive improvement is required to accept a directive; an empty accepted set skips policy SFT.",
+  "generation_checks": {
+    "sample": true,
+    "temperature": 0.8,
+    "per_dream_seed_reset": false,
+    "rng_advances_in_tiny_engine_check": true,
+    "tiny_engine_unique_outputs_out_of_60": 42
+  },
+  "policy_concentration_explanation": "Repeated fitting of one accepted setting is consistent with a narrowed output distribution. Causality is inferred; logits and entropy of the actual checkpoint were not measured.",
+  "interpretation_limits": [
+    "Valid directives are normalized JSON. Raw valid token strings were not recorded.",
+    "Zero outer-policy steps does not imply that task memory training or temporary inner adaptation was skipped.",
+    "No final ARC accuracy follows from training-only candidate scores."
+  ],
+  "per_task": [
+    {
+      "task_id": "44f52bb0",
+      "generated": 60,
+      "valid_directives": 13,
+      "unique_valid_directives": 2,
+      "accepted_count": 12,
+      "optimizer_steps": 24
+    },
+    {
+      "task_id": "4be741c5",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 0,
+      "optimizer_steps": 0
+    },
+    {
+      "task_id": "5582e5ca",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 0,
+      "optimizer_steps": 0
+    },
+    {
+      "task_id": "5614dbcf",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 0,
+      "optimizer_steps": 0
+    },
+    {
+      "task_id": "5bd6f4ac",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 0,
+      "optimizer_steps": 0
+    },
+    {
+      "task_id": "6150a2bd",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 0,
+      "optimizer_steps": 0
+    },
+    {
+      "task_id": "67e8384a",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 15,
+      "optimizer_steps": 24
+    },
+    {
+      "task_id": "6d0aefbc",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 0,
+      "optimizer_steps": 0
+    },
+    {
+      "task_id": "6e02f1e3",
+      "generated": 60,
+      "valid_directives": 60,
+      "unique_valid_directives": 1,
+      "accepted_count": 0,
+      "optimizer_steps": 0
+    }
+  ]
+}
