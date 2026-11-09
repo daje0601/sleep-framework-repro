@@ -13,7 +13,7 @@
   "outer_optimizer_steps": 48,
   "training_log_sha256": "7acc8547e05a35417bc26e6b6e65411eb2e927bd5720f1dcf06c20d5163e6761",
   "checkpoint_bytes_at_check": 9173462097,
-  "evaluation_attempts_completed": 0,
+  "evaluation_attempts_completed": 1,
   "accuracy": null,
   "observations": [
     "Tasks 1 and 7 accepted 12 and 15 improved directives; cumulative 48 policy optimizer steps.",
@@ -35,7 +35,7 @@
     "train/training_summary.json": "5987efeb44e3b48ff92b3f2c6d7fd51d53898a7035c7b29302f0eb68c6c999f3"
   },
   "evaluation_job_id": "job-wvbhdrhigz7m",
-  "evaluation_status_at_check": "scheduling",
+  "evaluation_status_at_check": "running",
   "evaluation_allocation_attempts": [
     {
       "job_id": "job-ad85lxfclxol",
@@ -50,5 +50,7 @@
       "queue_timeout_seconds": 7200,
       "run_id": "sleep-eval-20261107-a100-v3-seed42-21-r1"
     }
-  ]
+  ],
+  "evaluation_progress_checked_utc": "2026-11-09T07:26:00.556105+00:00",
+  "evaluation_progress_log_sha256": "728f6141ce8fa637b813621fdeb41858e11d885cc4ed6377bd0e72d75aca9ff3"
 }
